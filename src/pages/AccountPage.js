@@ -321,7 +321,7 @@ function AccountPage({ account }) {
               marginTop: '1.5rem'
             }}
           >
-            <TxnList transactions={transactions} />
+            <TxnList transactions={transactions} hideAccounts={true} />
           </Panel>
           <TYPE.main fontSize={'1.125rem'} style={{ marginTop: '3rem' }}>
             Wallet Stats

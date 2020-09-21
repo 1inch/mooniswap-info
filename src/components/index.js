@@ -112,4 +112,8 @@ export const FullWrapper = styled.div`
   }
 `
 
+export const StyledIcon = styled.div`
+  color: ${({ theme }) => theme.text1};
+`
+
 export { Hint, Divider, Address, EmptyCard }
