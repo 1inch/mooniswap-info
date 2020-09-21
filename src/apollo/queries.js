@@ -74,30 +74,33 @@ export const GET_BLOCKS = timestamps => {
 }
 
 export const SHARE_VALUE = (pairAddress, blocks) => {
+  if (!blocks || blocks.length == 0) {
+    throw `blocks argument is ${blocks}`;
+  }
   let queryString = 'query blocks {'
   queryString += blocks.map(
-    block => `t${block.timestamp}:pair(id:"${pairAddress}", block: { number: ${block.number} }) { 
-    reserve0
-    reserve1
-    reserveUSD
-    totalSupply 
-    token0{
-      derivedETH
-    }
-    token1{
-      derivedETH
-    }
-  }
-  `
+    block => `
+      t${block.timestamp}:pair(id:"${pairAddress}", block: { number: ${block.number} }) { 
+        reserve0
+        reserve1
+        reserveUSD
+        totalSupply 
+        token0{
+          derivedETH
+        }
+        token1{
+          derivedETH
+        }
+      }
+    `
   )
-
   queryString += ','
-
   queryString += blocks.map(
-    block => `b${block.timestamp}: bundle(id:"1", block: { number: ${block.number} }) { 
-    ethPrice
-  }
-  `
+    block => `
+      b${block.timestamp}: bundle(id:"1", block: { number: ${block.number} }) { 
+        ethPrice
+      }
+    `
   )
 
   queryString += '}'

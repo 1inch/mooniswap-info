@@ -166,8 +166,9 @@ export function getMetricsForPositionWindow(positionT0: Position, positionT1: Po
  * @param currentETHPrice // current price of eth used for usd conversions
  */
 export async function getHistoricalPairReturns(startDateTimestamp, currentPairData, pairSnapshots, currentETHPrice) {
+  debugger;
   // catch case where data not puplated yet
-  if (!currentPairData.createdAtTimestamp) {
+  if (!currentPairData.createdAtTimestamp && !currentPairData.createdAtBlockNumber) {
     return []
   }
   let dayIndex: number = Math.round(startDateTimestamp / 86400) // get unique day bucket unix

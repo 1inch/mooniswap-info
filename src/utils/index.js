@@ -218,7 +218,8 @@ export async function getLiquidityTokenBalanceOvertime(account, timestamps) {
  * @param {Array} timestamps
  */
 export async function getShareValueOverTime(pairAddress, timestamps) {
-  if (!timestamps) {
+  debugger;
+  if (!timestamps || timestamps.length === 0) {
     const utcCurrentTime = dayjs()
     const utcSevenDaysBack = utcCurrentTime.subtract(8, 'day').unix()
     timestamps = getTimestampRange(utcSevenDaysBack, 86400, 7)
