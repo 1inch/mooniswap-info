@@ -10,7 +10,7 @@ import {
   FIRST_SNAPSHOT,
   POSITIONS_BY_BLOCK
 } from '../apollo/queries'
-import { useTimeframe } from './Application'
+import { useTimeframe, useStartTimestamp } from './Application'
 import { timeframeOptions } from '../constants'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
@@ -18,6 +18,7 @@ import { useEthPrice } from './GlobalData'
 import { ETH, getShareValueOverTime } from '../helpers'
 import { getTimeframe, getBlocksFromTimestamps } from '../utils'
 import { getLPReturnsOnPair, getHistoricalPairReturns } from '../utils/returns'
+
 
 dayjs.extend(utc)
 
@@ -39,6 +40,73 @@ const UserContext = createContext()
 function useUserContext() {
   return useContext(UserContext)
 }
+
+/**
+ * For a given position (data about holding) and user, get the chart
+ * data for the fees and liquidity over time
+ * @param {*} position
+ * @param {*} account
+ */
+export function useUserPositionChart(position, account) {
+  const pairAddress = position?.pair?.id
+  const [state, { updateUserPairReturns }] = useUserContext()
+
+  // get oldest date of data to fetch
+  const startDateTimestamp = useStartTimestamp()
+
+  // get users adds and removes on this pair
+  const snapshots = useUserSnapshots(account)
+  const pairSnapshots =
+    snapshots &&
+    position &&
+    snapshots.filter(currentSnapshot => {
+      return currentSnapshot.pair.id === position.pair.id
+    })
+
+  // get data needed for calculations
+  const currentPairData = usePairData(pairAddress)
+  const [currentETHPrice] = useEthPrice()
+
+  // formatetd array to return for chart data
+  const formattedHistory = state?.[account]?.[USER_PAIR_RETURNS_KEY]?.[pairAddress]
+
+  useEffect(() => {
+    async function fetchData() {
+      let fetchedData = await getHistoricalPairReturns(
+        startDateTimestamp,
+        currentPairData,
+        pairSnapshots,
+        currentETHPrice
+      )
+      updateUserPairReturns(account, pairAddress, fetchedData)
+    }
+    if (
+      account &&
+      startDateTimestamp &&
+      pairSnapshots &&
+      !formattedHistory &&
+      currentPairData &&
+      Object.keys(currentPairData).length > 0 &&
+      pairAddress &&
+      currentETHPrice
+    ) {
+      fetchData()
+    }
+  }, [
+    account,
+    startDateTimestamp,
+    pairSnapshots,
+    formattedHistory,
+    pairAddress,
+    currentPairData,
+    currentETHPrice,
+    updateUserPairReturns,
+    position.pair.id
+  ])
+
+  return formattedHistory
+}
+
 
 function reducer(state, { type, payload }) {
   switch (type) {
@@ -144,11 +212,22 @@ export default function Provider({ children }) {
     })
   }, [])
 
+  const updateUserPairReturns = useCallback((account, pairAddress, data) => {
+    dispatch({
+      type: UPDATE_USER_PAIR_RETURNS,
+      payload: {
+        account,
+        pairAddress,
+        data
+      }
+    })
+  }, [])
+
   return (
     <UserContext.Provider
       value={useMemo(
-        () => [state, { updateTransactions, updatePositions, updateUserPositionHistory, updateUserHodlReturns, updateUserSnapshots }],
-        [state, updateTransactions, updatePositions, updateUserPositionHistory, updateUserHodlReturns, updateUserSnapshots]
+        () => [state, { updateTransactions, updatePositions, updateUserPositionHistory, updateUserHodlReturns, updateUserSnapshots, updateUserPairReturns }],
+        [state, updateTransactions, updatePositions, updateUserPositionHistory, updateUserHodlReturns, updateUserSnapshots, updateUserPairReturns]
       )}
     >
       {children}
@@ -830,7 +909,6 @@ export function useUserPositions(account) {
 
   useEffect(() => {
     async function fetchData(account) {
-      debugger;
       try {
         let result = await client.query({
           query: USER_POSITIONS,
