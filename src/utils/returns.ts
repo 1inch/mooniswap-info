@@ -183,9 +183,9 @@ export async function getHistoricalPairReturns(startDateTimestamp, currentPairDa
   const dayTimestamps = []
   while (dayIndex < currentDayIndex) {
     // only account for days where this pair existed
-    if (dayIndex * 86400 >= parseInt(currentPairData.createdAtTimestamp)) {
+    // if (dayIndex * 86400 >= parseInt(currentPairData.createdAtTimestamp)) {
       dayTimestamps.push(dayIndex * 86400)
-    }
+    // }
     dayIndex = dayIndex + 1
   }
 
