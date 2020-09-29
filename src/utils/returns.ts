@@ -108,6 +108,41 @@ export function getMetricsForPositionWindow(positionT0: Position, positionT1: Po
   positionT0 = formatPricesForEarlyTimestamps(positionT0)
   positionT1 = formatPricesForEarlyTimestamps(positionT1)
 
+  // const roi = 1;
+  //
+  // return {
+  //   hodleReturn: 0,
+  //   netReturn: 0,
+  //   uniswapReturn: 0,
+  //   impLoss: 0,
+  //   fees: (positionT1['timestamp'] - positionT0['timestamp']) * roi;
+  // }
+  //
+
+  let wrongCalc = false;
+  if (positionT1.liquidityTokenBalance != positionT0.liquidityTokenBalance) {
+    wrongCalc = true;
+    // const temp = positionT0;
+    // positionT0 = positionT1;
+    // positionT1 = temp;
+
+    // positionT0.liquidityTokenBalance = 0;
+    // positionT1.liquidityTokenBalance = 0;
+
+    // // positionT1.liquidityTokenBalance = positionT0.liquidityTokenBalance;
+    // positionT1.liquidityTokenTotalSupply = positionT0.liquidityTokenTotalSupply;
+
+    const returnData =  {
+      hodleReturn: 0,
+      netReturn: 0,
+      uniswapReturn: 0,
+      impLoss: 0,
+      fees: 0,
+      wrongCalc: true
+    }
+    return returnData;
+  }
+
   // calculate ownership at ends of window, for end of window we need original LP token balance / new total supply
   const t0Ownership = positionT0.liquidityTokenBalance / positionT0.liquidityTokenTotalSupply
   const t1Ownership = positionT0.liquidityTokenBalance / positionT1.liquidityTokenTotalSupply
@@ -119,6 +154,8 @@ export function getMetricsForPositionWindow(positionT0: Position, positionT1: Po
   // get current token values
   const token0_amount_t1 = t1Ownership * positionT1.reserve0
   const token1_amount_t1 = t1Ownership * positionT1.reserve1
+
+
 
   // calculate squares to find imp loss and fee differences
   const sqrK_t0 = Math.sqrt(token0_amount_t0 * token1_amount_t0)
@@ -139,6 +176,12 @@ export function getMetricsForPositionWindow(positionT0: Position, positionT1: Po
   // calculate USD value at t0 and t1 using initial token deposit amounts for asset return
   const assetValueT0 = token0_amount_t0 * positionT0.token0PriceUSD + token1_amount_t0 * positionT0.token1PriceUSD
   const assetValueT1 = token0_amount_t0 * positionT1.token0PriceUSD + token1_amount_t0 * positionT1.token1PriceUSD
+
+  // console.log('assetValueT0', assetValueT0, 'assetValueT1', assetValueT1, 'net = ', assetValueT1-assetValueT0);
+  // if (wrongCalc) {
+  //   console.error('getMetricsForPositionWindow: WRONG CALC');
+  //   console.log('t0', token0_amount_t0, token1_amount_t0, 't1', token0_amount_t1, token1_amount_t1);
+  // }
 
   const imp_loss_usd = no_fees_usd - assetValueT1
   const uniswap_return = difference_fees_usd + imp_loss_usd
@@ -166,7 +209,7 @@ export function getMetricsForPositionWindow(positionT0: Position, positionT1: Po
  * @param currentETHPrice // current price of eth used for usd conversions
  */
 export async function getHistoricalPairReturns(startDateTimestamp, currentPairData, pairSnapshots, currentETHPrice) {
-  debugger;
+
   // catch case where data not puplated yet
   if (!currentPairData.createdAtTimestamp && !currentPairData.createdAtBlockNumber) {
     return []
@@ -210,9 +253,11 @@ export async function getHistoricalPairReturns(startDateTimestamp, currentPairDa
     const dailyChanges = pairSnapshots.filter(snapshot => {
       return snapshot.timestamp < timestampCeiling && snapshot.timestamp > dayTimestamp
     })
+    let wrongCalc = false;
     for (let i = 0; i < dailyChanges.length; i++) {
       const positionT1 = dailyChanges[i]
       const localReturns = getMetricsForPositionWindow(positionT0, positionT1)
+      wrongCalc = wrongCalc || localReturns['wrongCalc'];
       netFees = netFees + localReturns.fees
       positionT0 = positionT1
     }
@@ -239,20 +284,46 @@ export async function getHistoricalPairReturns(startDateTimestamp, currentPairDa
         (parseFloat(positionT1.liquidityTokenBalance) / parseFloat(positionT1.liquidityTokenTotalSupply)) *
         parseFloat(positionT1.reserveUSD)
       const localReturns = getMetricsForPositionWindow(positionT0, positionT1)
+      wrongCalc = wrongCalc || localReturns['wrongCalc'];
       const localFees = netFees + localReturns.fees
-
+      // console.log(`index ${index} push ${localFees}, positionT1.liquidityTokenBalance${positionT1.liquidityTokenBalance}`);
+      // if (index == "1") {
+      //   debugger;
+      // }
+      // if (positionT1.liquidityTokenBalance > 0)
       formattedHistory.push({
         date: dayTimestamp,
         usdValue: currentLiquidityValue,
-        fees: localFees
+        fees: localFees,
+        wrongCalc: wrongCalc
       })
+      // netFees = localFees;
     }
   }
-
+  // debugger;
+  // d s s s w s s s s s s s w
+  if (formattedHistory.some( (x) => x?.wrongCalc ) ) {
+    for (let i in formattedHistory) {
+      if (+i > 0) {
+        if (formattedHistory[+i - 1].fees > formattedHistory[i].fees) { 
+          formattedHistory[i].fees = formattedHistory[+i - 1].fees;
+        }
+      }
+    }
+  }
+  // let wasWrongCalc = false;
+  // for (let i in formattedHistory) {
+  //   wasWrongCalc = wasWrongCalc || formattedHistory[i]?.wrongCalc;
+  //   if (+i > 0) {
+  //     if (formattedHistory[i]?.wrongCalc || (formattedHistory[+i-1].fees > formattedHistory[i].fees && wasWrongCalc)) {
+  //       formattedHistory[i].fees = formattedHistory[+i-1].fees;
+  //     }
+  //   }
+  // }
   return formattedHistory
 }
 
-/**
+/** new version of user.js/GetReturns
  * For a given pair and user, get the return metrics
  * @param user
  * @param pair
@@ -282,19 +353,41 @@ export async function getLPReturnsOnPair(user: string, pair, ethPrice: number, s
     token1PriceUSD: pair.token1.derivedETH * ethPrice
   }
 
+  console.log(pair.token0.symbol);
+  console.log(pair.token1.symbol);
   for (const index in snapshots) {
     // get positions at both bounds of the window
     let positionT0 = snapshots[index]
     let positionT1 = parseInt(index) === snapshots.length - 1 ? currentPosition : snapshots[parseInt(index) + 1]
 
+    console.log(`positionT0 `, positionT0, `positionT1 `, positionT1);
     let results = getMetricsForPositionWindow(positionT0, positionT1)
+    // let issue = "";
+    // if (positionT1.liquidityTokenBalance == "0") issue = "t0.lp = 0";
+    // if (positionT1.liquidityTokenBalance < positionT0.liquidityTokenBalance) issue += 't1.lp < l0.lp';
+    // console.log(`results[${issue}]`, results);
+    // if (issue) {
+    //   results = getMetricsForPositionWindow(positionT1, positionT1);
+    // }
+    // if (positionT1.liquidityTokenBalance == "0") issue = "t0.lp = 0";
+    // if (positionT1.liquidityTokenBalance < positionT0.liquidityTokenBalance) issue += 't1.lp < l0.lp';
+    // if (issue) {
+    //   console.log('issue -> skip calc window');
+    //   continue;
+    // }
+    // if (positionT0.liquidityTokenBalance > positionT1.liquidityTokenBalance) {
+    //   results.fees = 1e-18
+    // }
+
     hodlReturn = hodlReturn + results.hodleReturn
     netReturn = netReturn + results.netReturn
     uniswapReturn = uniswapReturn + results.uniswapReturn
-    fees = fees + results.fees
+    if (results.fees)
+      fees = fees + results.fees
+    console.log(`getLPReturnsOnPair.index ${index}, fees ${fees}, ${uniswapReturn} ${netReturn}`);
   }
 
-  return {
+  const returnData = {
     principal,
     net: {
       return: netReturn
@@ -306,4 +399,7 @@ export async function getLPReturnsOnPair(user: string, pair, ethPrice: number, s
       sum: fees
     }
   }
+  console.log(returnData)
+
+  return returnData;
 }
