@@ -61,8 +61,9 @@ const DashGrid = styled.div`
     }
   }
 
-  @media screen and (min-width: 1200px) {
-    grid-template-columns: 35px 1.5fr 1fr 1fr 1fr 1fr 1fr;
+  @media screen and (min-width: 400px) {
+    // grid-template-columns: 35px 1.5fr 1fr 1fr 1fr 1fr 1fr;
+    grid-template-columns: 35px 1fr 1fr 1fr;
     grid-template-areas: 'number name ownership market return combinded value';
   }
 `
@@ -101,6 +102,7 @@ const SORT_FIELD = {
 // }
 
 function PositionList({ positions }) {
+  const below600 = useMedia('(max-width: 600px)')
   const below740 = useMedia('(max-width: 740px)')
   const below1080 = useMedia('(max-width: 1080px)')
 
@@ -172,101 +174,107 @@ function PositionList({ positions }) {
               </AutoColumn>
             </AutoColumn>
           </DataText>
+          {!below600 &&(
           <DataText area="ownership">{rawPercent(poolOwnership)}</DataText>
-          <DataText area="market">
-            <AutoColumn gap="12px">
-              <Text fontWeight={500}>
-                <RowFixed>
-                  {formattedNum(position?.assetReturn, true, true)} ({formattedPercent(position?.assetPercentChange)})
-                </RowFixed>
-              </Text>
-              <AutoColumn gap="4px" justify="flex-end">
-                <Text fontSize="12px">
-                  {parseFloat(position.pair.token0.derivedETH)
-                    ? formattedNum(
-                        position?.assetReturn / (parseFloat(position.pair.token0.derivedETH) * ethPrice) / 2,
-                        false,
-                        true
-                      )
-                    : 0}{' '}
-                  {position.pair.token0.symbol}
-                </Text>
-                <Text fontSize="12px">
-                  {parseFloat(position.pair.token1.derivedETH)
-                    ? formattedNum(
-                        position?.assetReturn / (parseFloat(position.pair.token1.derivedETH) * ethPrice) / 2,
-                        false,
-                        true
-                      )
-                    : 0}{' '}
-                  {position.pair.token1.symbol}
-                </Text>
-              </AutoColumn>
-            </AutoColumn>
-          </DataText>
-          <DataText area="return">
-            <AutoColumn gap="12px">
-              <Text fontWeight={500}>
-                <RowFixed>
-                  {formattedNum(position?.mooniswapReturn, true, true)} (
-                  {formattedPercent(position?.mooniswapPercentChange)})
-                </RowFixed>
-              </Text>
-              <AutoColumn gap="4px" justify="flex-end">
-                <Text fontSize="12px">
-                  {parseFloat(position.pair.token0.derivedETH)
-                    ? formattedNum(
-                        position?.mooniswapReturn / (parseFloat(position.pair.token0.derivedETH) * ethPrice) / 2,
-                        false,
-                        true
-                      )
-                    : 0}{' '}
-                  {position.pair.token0.symbol}
-                </Text>
-                <Text fontSize="12px">
-                  {parseFloat(position.pair.token1.derivedETH)
-                    ? formattedNum(
-                        position?.mooniswapReturn / (parseFloat(position.pair.token1.derivedETH) * ethPrice) / 2,
-                        false,
-                        true
-                      )
-                    : 0}{' '}
-                  {position.pair.token1.symbol}
-                </Text>
-              </AutoColumn>
-            </AutoColumn>
-          </DataText>
-          <DataText area="combined">
-            <AutoColumn gap="12px">
-              <Text fontWeight={500}>
-                <RowFixed>
-                  {formattedNum(position?.netReturn, true, true)} ({formattedPercent(position?.netPercentChange)})
-                </RowFixed>
-              </Text>
-              <AutoColumn gap="4px" justify="flex-end">
-                <Text fontSize="12px">
-                  {parseFloat(position.pair.token0.derivedETH)
-                    ? formattedNum(
-                        position?.netReturn / (parseFloat(position.pair.token0.derivedETH) * ethPrice) / 2,
-                        false,
-                        true
-                      )
-                    : 0}{' '}
-                  {position.pair.token0.symbol}
-                </Text>
-                <Text fontSize="12px">
-                  {parseFloat(position.pair.token1.derivedETH)
-                    ? formattedNum(
-                        position?.netReturn / (parseFloat(position.pair.token1.derivedETH) * ethPrice) / 2,
-                        false,
-                        true
-                      )
-                    : 0}{' '}
-                  {position.pair.token1.symbol}
-                </Text>
-              </AutoColumn>
-            </AutoColumn>
-          </DataText>
+          ) ||
+          below600 && (
+            <DataText area="ownership">{}</DataText>
+            )
+          }
+          {/*<DataText area="market">*/}
+          {/*  <AutoColumn gap="12px">*/}
+          {/*    <Text fontWeight={500}>*/}
+          {/*      <RowFixed>*/}
+          {/*        {formattedNum(position?.assetReturn, true, true)} ({formattedPercent(position?.assetPercentChange)})*/}
+          {/*      </RowFixed>*/}
+          {/*    </Text>*/}
+          {/*    <AutoColumn gap="4px" justify="flex-end">*/}
+          {/*      <Text fontSize="12px">*/}
+          {/*        {parseFloat(position.pair.token0.derivedETH)*/}
+          {/*          ? formattedNum(*/}
+          {/*              position?.assetReturn / (parseFloat(position.pair.token0.derivedETH) * ethPrice) / 2,*/}
+          {/*              false,*/}
+          {/*              true*/}
+          {/*            )*/}
+          {/*          : 0}{' '}*/}
+          {/*        {position.pair.token0.symbol}*/}
+          {/*      </Text>*/}
+          {/*      <Text fontSize="12px">*/}
+          {/*        {parseFloat(position.pair.token1.derivedETH)*/}
+          {/*          ? formattedNum(*/}
+          {/*              position?.assetReturn / (parseFloat(position.pair.token1.derivedETH) * ethPrice) / 2,*/}
+          {/*              false,*/}
+          {/*              true*/}
+          {/*            )*/}
+          {/*          : 0}{' '}*/}
+          {/*        {position.pair.token1.symbol}*/}
+          {/*      </Text>*/}
+          {/*    </AutoColumn>*/}
+          {/*  </AutoColumn>*/}
+          {/*</DataText>*/}
+          {/*<DataText area="return">*/}
+          {/*  <AutoColumn gap="12px">*/}
+          {/*    <Text fontWeight={500}>*/}
+          {/*      <RowFixed>*/}
+          {/*        {formattedNum(position?.mooniswapReturn, true, true)} (*/}
+          {/*        {formattedPercent(position?.mooniswapPercentChange)})*/}
+          {/*      </RowFixed>*/}
+          {/*    </Text>*/}
+          {/*    <AutoColumn gap="4px" justify="flex-end">*/}
+          {/*      <Text fontSize="12px">*/}
+          {/*        {parseFloat(position.pair.token0.derivedETH)*/}
+          {/*          ? formattedNum(*/}
+          {/*              position?.mooniswapReturn / (parseFloat(position.pair.token0.derivedETH) * ethPrice) / 2,*/}
+          {/*              false,*/}
+          {/*              true*/}
+          {/*            )*/}
+          {/*          : 0}{' '}*/}
+          {/*        {position.pair.token0.symbol}*/}
+          {/*      </Text>*/}
+          {/*      <Text fontSize="12px">*/}
+          {/*        {parseFloat(position.pair.token1.derivedETH)*/}
+          {/*          ? formattedNum(*/}
+          {/*              position?.mooniswapReturn / (parseFloat(position.pair.token1.derivedETH) * ethPrice) / 2,*/}
+          {/*              false,*/}
+          {/*              true*/}
+          {/*            )*/}
+          {/*          : 0}{' '}*/}
+          {/*        {position.pair.token1.symbol}*/}
+          {/*      </Text>*/}
+          {/*    </AutoColumn>*/}
+          {/*  </AutoColumn>*/}
+          {/*</DataText>*/}
+          {/*<DataText area="combined">*/}
+          {/*  <AutoColumn gap="12px">*/}
+          {/*    <Text fontWeight={500}>*/}
+          {/*      <RowFixed>*/}
+          {/*        {formattedNum(position?.netReturn, true, true)} ({formattedPercent(position?.netPercentChange)})*/}
+          {/*      </RowFixed>*/}
+          {/*    </Text>*/}
+          {/*    <AutoColumn gap="4px" justify="flex-end">*/}
+          {/*      <Text fontSize="12px">*/}
+          {/*        {parseFloat(position.pair.token0.derivedETH)*/}
+          {/*          ? formattedNum(*/}
+          {/*              position?.netReturn / (parseFloat(position.pair.token0.derivedETH) * ethPrice) / 2,*/}
+          {/*              false,*/}
+          {/*              true*/}
+          {/*            )*/}
+          {/*          : 0}{' '}*/}
+          {/*        {position.pair.token0.symbol}*/}
+          {/*      </Text>*/}
+          {/*      <Text fontSize="12px">*/}
+          {/*        {parseFloat(position.pair.token1.derivedETH)*/}
+          {/*          ? formattedNum(*/}
+          {/*              position?.netReturn / (parseFloat(position.pair.token1.derivedETH) * ethPrice) / 2,*/}
+          {/*              false,*/}
+          {/*              true*/}
+          {/*            )*/}
+          {/*          : 0}{' '}*/}
+          {/*        {position.pair.token1.symbol}*/}
+          {/*      </Text>*/}
+          {/*    </AutoColumn>*/}
+          {/*  </AutoColumn>*/}
+          {/*</DataText>*/}
           <DataText area="value">
             <AutoColumn gap="12px" justify="flex-end">
               <Text fontWeight={500}>{formattedNum(valueUSD, true)}</Text>
@@ -316,65 +324,76 @@ function PositionList({ positions }) {
             Name
           </Text>
         </Flex>
+        {!below600 && (
         <Flex alignItems="center" justifyContent="flexEnd">
           <ClickableText
             area="ownership"
-            onClick={e => {
-              setSortedColumn(SORT_FIELD.LIQ)
-              setSortDirection(sortedColumn !== SORT_FIELD.LIQ ? true : !sortDirection)
-            }}
+            // onClick={e => {
+            //   setSortedColumn(SORT_FIELD.LIQ)
+            //   setSortDirection(sortedColumn !== SORT_FIELD.LIQ ? true : !sortDirection)
+            // }}
           >
-            Pool Ownership {sortedColumn === SORT_FIELD.LIQ ? (!sortDirection ? '↑' : '↓') : ''}
+            Pool Ownership
+            {/*{sortedColumn === SORT_FIELD.LIQ ? (!sortDirection ? '↑' : '↓') : ''}*/}
           </ClickableText>
         </Flex>
-        <Flex alignItems="center">
-          <ClickableText
-            area="market"
-            onClick={e => {
-              setSortedColumn(SORT_FIELD.VOL)
-              setSortDirection(sortedColumn !== SORT_FIELD.VOL ? true : !sortDirection)
-            }}
-          >
-            Asset Return
-            {sortedColumn === SORT_FIELD.VOL ? (!sortDirection ? '↑' : '↓') : ''}
-          </ClickableText>
-        </Flex>
-        {!below1080 && (
+        ) || below600 &&
+        (
           <Flex alignItems="center" justifyContent="flexEnd">
-            <ClickableText
-              area="return"
-              onClick={e => {
-                setSortedColumn(SORT_FIELD.VOL_7DAYS)
-                setSortDirection(sortedColumn !== SORT_FIELD.VOL_7DAYS ? true : !sortDirection)
-              }}
-            >
-              Mooniswap Return {sortedColumn === SORT_FIELD.VOL_7DAYS ? (!sortDirection ? '↑' : '↓') : ''}
-            </ClickableText>
+
           </Flex>
-        )}
-        {!below1080 && (
-          <Flex alignItems="center" justifyContent="flexEnd">
-            <ClickableText
-              area="combined"
-              onClick={e => {
-                setSortedColumn(SORT_FIELD.VOL_7DAYS)
-                setSortDirection(sortedColumn !== SORT_FIELD.VOL_7DAYS ? true : !sortDirection)
-              }}
-            >
-              Combined Return {sortedColumn === SORT_FIELD.VOL_7DAYS ? (!sortDirection ? '↑' : '↓') : ''}
-            </ClickableText>
-          </Flex>
-        )}
-        {!below1080 && (
+        ) }
+        {/*<Flex alignItems="center">*/}
+        {/*  <ClickableText*/}
+        {/*    area="market"*/}
+        {/*    onClick={e => {*/}
+        {/*      setSortedColumn(SORT_FIELD.VOL)*/}
+        {/*      setSortDirection(sortedColumn !== SORT_FIELD.VOL ? true : !sortDirection)*/}
+        {/*    }}*/}
+        {/*  >*/}
+        {/*    Asset Return*/}
+        {/*    {sortedColumn === SORT_FIELD.VOL ? (!sortDirection ? '↑' : '↓') : ''}*/}
+        {/*  </ClickableText>*/}
+        {/*</Flex>*/}
+        {/*{!below1080 && (*/}
+        {/*  <Flex alignItems="center" justifyContent="flexEnd">*/}
+        {/*    <ClickableText*/}
+        {/*      area="return"*/}
+        {/*      onClick={e => {*/}
+        {/*        setSortedColumn(SORT_FIELD.VOL_7DAYS)*/}
+        {/*        setSortDirection(sortedColumn !== SORT_FIELD.VOL_7DAYS ? true : !sortDirection)*/}
+        {/*      }}*/}
+        {/*    >*/}
+        {/*      Mooniswap Return {sortedColumn === SORT_FIELD.VOL_7DAYS ? (!sortDirection ? '↑' : '↓') : ''}*/}
+        {/*    </ClickableText>*/}
+        {/*  </Flex>*/}
+        {/*)}*/}
+        {/*{!below1080 && (*/}
+        {/*  <Flex alignItems="center" justifyContent="flexEnd">*/}
+        {/*    <ClickableText*/}
+        {/*      area="combined"*/}
+        {/*      onClick={e => {*/}
+        {/*        setSortedColumn(SORT_FIELD.VOL_7DAYS)*/}
+        {/*        setSortDirection(sortedColumn !== SORT_FIELD.VOL_7DAYS ? true : !sortDirection)*/}
+        {/*      }}*/}
+        {/*    >*/}
+        {/*      Combined Return {sortedColumn === SORT_FIELD.VOL_7DAYS ? (!sortDirection ? '↑' : '↓') : ''}*/}
+        {/*    </ClickableText>*/}
+        {/*  </Flex>*/}
+        {/*)}*/}
+        {
+          // !below1080 &&
+          (
           <Flex alignItems="center" justifyContent="flexEnd">
             <ClickableText
               area="value"
-              onClick={e => {
-                setSortedColumn(SORT_FIELD.FEES)
-                setSortDirection(sortedColumn !== SORT_FIELD.FEES ? true : !sortDirection)
-              }}
+              // onClick={e => {
+              //   setSortedColumn(SORT_FIELD.FEES)
+              //   setSortDirection(sortedColumn !== SORT_FIELD.FEES ? true : !sortDirection)
+              // }}
             >
-              Value{sortedColumn === SORT_FIELD.FEES ? (!sortDirection ? '↑' : '↓') : ''}
+              Value
+              {/*{sortedColumn === SORT_FIELD.FEES ? (!sortDirection ? '↑' : '↓') : ''}*/}
             </ClickableText>
           </Flex>
         )}

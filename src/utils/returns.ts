@@ -305,7 +305,7 @@ export async function getHistoricalPairReturns(startDateTimestamp, currentPairDa
   if (formattedHistory.some( (x) => x?.wrongCalc ) ) {
     for (let i in formattedHistory) {
       if (+i > 0) {
-        if (formattedHistory[+i - 1].fees > formattedHistory[i].fees) { 
+        if (formattedHistory[+i - 1].fees > formattedHistory[i].fees) {
           formattedHistory[i].fees = formattedHistory[+i - 1].fees;
         }
       }
