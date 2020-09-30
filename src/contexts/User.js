@@ -10,7 +10,7 @@ import {
   FIRST_SNAPSHOT,
   POSITIONS_BY_BLOCK
 } from '../apollo/queries'
-import { useTimeframe, useStartTimestamp } from './Application'
+import { useTimeframe, useStartTimestamp, DEFAULT_TIMESTAMP } from './Application'
 import { timeframeOptions } from '../constants'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
@@ -938,6 +938,8 @@ export function useUserPositions(account) {
     }
   }, [account, positions, updatePositions, ethPrice, snapshots])
 
+
+
   return positions
 }
 
@@ -949,7 +951,7 @@ export function useUserPositions(account) {
  * and usd liquidity value.
  */
 export function useUserLiquidityChart(account) {
-  // formatetd array to return for chart data
+  // formatted array to return for chart data
   const [formattedHistory, setFormattedHistory] = useState()
 
   const [startDateTimestamp, setStartDateTimestamp] = useState()

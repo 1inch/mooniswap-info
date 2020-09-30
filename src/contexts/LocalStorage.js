@@ -171,6 +171,9 @@ export function useSavedAccounts() {
 
   function addAccount(account) {
     let newAccounts = state?.[SAVED_ACCOUNTS]
+    if (!newAccounts) {
+      newAccounts = [];
+    }
     newAccounts.push(account)
     updateKey(SAVED_ACCOUNTS, newAccounts)
   }

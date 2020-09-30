@@ -208,12 +208,16 @@ export function getMetricsForPositionWindow(positionT0: Position, positionT1: Po
  * @param pairSnapshots // history of entries and exits for lp on this pair
  * @param currentETHPrice // current price of eth used for usd conversions
  */
-export async function getHistoricalPairReturns(startDateTimestamp, currentPairData, pairSnapshots, currentETHPrice) {
-
+export async function getHistoricalPairReturns(startDateTimestamp, currentPairData, pairSnapshots, currentETHPrice, specialCase = false) {
+  console.log('getHistoricalPairReturns ', startDateTimestamp, currentPairData, pairSnapshots, currentETHPrice);
+  // debugger
   // catch case where data not puplated yet
-  if (!currentPairData.createdAtTimestamp && !currentPairData.createdAtBlockNumber) {
-    return []
+  if (!specialCase) {
+    if (!currentPairData.createdAtTimestamp && !currentPairData.createdAtBlockNumber) {
+      return []
+    }
   }
+
   let dayIndex: number = Math.round(startDateTimestamp / 86400) // get unique day bucket unix
   const currentDayIndex: number = Math.round(dayjs.utc().unix() / 86400)
   let sortedPositions = pairSnapshots.sort((a, b) => {
@@ -360,8 +364,8 @@ export async function getLPReturnsOnPair(user: string, pair, ethPrice: number, s
     let positionT0 = snapshots[index]
     let positionT1 = parseInt(index) === snapshots.length - 1 ? currentPosition : snapshots[parseInt(index) + 1]
 
-    console.log(`positionT0 `, positionT0, `positionT1 `, positionT1);
-    let results = getMetricsForPositionWindow(positionT0, positionT1)
+    // console.log(`positionT0 `, positionT0, `positionT1 `, positionT1);
+    let results = getMetricsForPositionWindow(snapshots[0], positionT1)
     // let issue = "";
     // if (positionT1.liquidityTokenBalance == "0") issue = "t0.lp = 0";
     // if (positionT1.liquidityTokenBalance < positionT0.liquidityTokenBalance) issue += 't1.lp < l0.lp';
@@ -383,9 +387,10 @@ export async function getLPReturnsOnPair(user: string, pair, ethPrice: number, s
     netReturn = netReturn + results.netReturn
     uniswapReturn = uniswapReturn + results.uniswapReturn
     if (results.fees)
-      fees = fees + results.fees
-    console.log(`getLPReturnsOnPair.index ${index}, fees ${fees}, ${uniswapReturn} ${netReturn}`);
+      fees = Math.max(fees,results.fees)
+    console.log(`getLPReturnsOnPair.index ${index}, fees ${fees}`);
   }
+
 
   const returnData = {
     principal,
@@ -399,7 +404,11 @@ export async function getLPReturnsOnPair(user: string, pair, ethPrice: number, s
       sum: fees
     }
   }
-  console.log(returnData)
 
   return returnData;
+}
+
+
+const calcPositionsFees = (user: string) => {
+
 }

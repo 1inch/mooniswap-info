@@ -24,9 +24,11 @@ function useApplicationContext() {
   return useContext(ApplicationContext)
 }
 
+export const DEFAULT_TIMESTAMP = 169023999-60*24*60*60;
+
 export function useStartTimestamp() {
   const [activeWindow] = useTimeframe()
-  const [startDateTimestamp, setStartDateTimestamp] = useState(169023999-60*24*60*60)
+  const [startDateTimestamp, setStartDateTimestamp] = useState(DEFAULT_TIMESTAMP)
 
   // monitor the old date fetched
   useEffect(() => {
