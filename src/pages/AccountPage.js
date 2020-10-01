@@ -284,7 +284,7 @@ function AccountPage({ account }) {
                       fontWeight={600}
                       color={aggregateFees ? 'green' : 'black'}
                     >
-                      {aggregateFees ? formattedNum(aggregateFees, true, true) : '-'}
+                      {aggregateFees ? formattedNum(aggregateFees, true, true) + (activePosition ?"":"+") : '-'}
                     </TYPE.main>
                   </RowFixed>
                 </AutoColumn>
