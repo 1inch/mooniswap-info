@@ -34,8 +34,20 @@ const CHART_VIEW = {
   FEES: 'Fees'
 }
 
-const PairReturnsChart = ({ account, position }) => {
+const PairReturnsChart = ({ account, position, withoutRender }) => {
+
   let data = useUserPositionChart(position, account)
+
+  if(data?.length) {
+    const fees = data[data.length -1]?.fees;
+    if( position?.fees) {
+      position.fees.sum = fees;
+    }
+    else {
+      position.fees = {sum: fees }
+    }
+  }
+
 
   const [timeWindow, setTimeWindow] = useTimeframe()
 
@@ -53,6 +65,10 @@ const PairReturnsChart = ({ account, position }) => {
 
   const [darkMode] = useDarkModeManager()
   const textColor = darkMode ? 'white' : 'black'
+
+  if (withoutRender) {
+    return (<div></div>)
+  }
 
   return (
     <ChartWrapper>

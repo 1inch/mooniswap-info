@@ -126,7 +126,7 @@ function AccountPage({ account }) {
   const dynamicPositions = activePosition ? [activePosition] : positions
 
   const aggregateFees = dynamicPositions?.reduce(function(total, position) {
-    return total + position.fees? position.fees.sum : 0
+    return total + (position.fees ? position?.fees?.sum : 0)
   }, 0)
 
   const positionValue = useMemo(() => {
@@ -149,6 +149,7 @@ function AccountPage({ account }) {
   }, [])
 
   const below600 = useMedia('(max-width: 600px)')
+  //let fakeComponentsRenderedOnce = false;
 
   return (
     <PageWrapper>
@@ -290,11 +291,17 @@ function AccountPage({ account }) {
               </AutoRow>
             </Panel>
           )}
+
+          {
+            // Hidden rendering of all charts - used to aggregate fees state, very dirty work around
+            positions?.length && positions.map( (p) => <PairReturnsChart account={account} position={p} withoutRender={true}/>)
+          }
+
           {!hideLPContent && (
             <PanelWrapper>
               <Panel style={{ gridColumn: '1' }}>
                 {activePosition ? (
-                  <PairReturnsChart account={account} position={activePosition} />
+                  <PairReturnsChart account={account} position={activePosition} withoutRender={false}/>
                 ) : (
                   <UserChart account={account} position={activePosition} />
                 )}
