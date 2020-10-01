@@ -292,10 +292,10 @@ function AccountPage({ account }) {
             </Panel>
           )}
 
-          {
-            // Hidden rendering of all charts - used to aggregate fees state, very dirty work around
-            positions?.length && positions.map( (p) => <PairReturnsChart account={account} position={p} withoutRender={true}/>)
-          }
+          {/*{*/}
+          {/*  // Hidden rendering of all charts - used to aggregate fees state, very dirty work around*/}
+          {/*  positions?.length && positions.map( (p) => <PairReturnsChart account={account} position={p} withoutRender={true}/>)*/}
+          {/*}*/}
 
           {!hideLPContent && (
             <PanelWrapper>
