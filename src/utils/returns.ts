@@ -209,8 +209,8 @@ export function getMetricsForPositionWindow(positionT0: Position, positionT1: Po
  * @param currentETHPrice // current price of eth used for usd conversions
  */
 export async function getHistoricalPairReturns(startDateTimestamp, currentPairData, pairSnapshots, currentETHPrice, specialCase = false) {
-  console.log('getHistoricalPairReturns ', startDateTimestamp, currentPairData, pairSnapshots, currentETHPrice);
-  // debugger
+  // console.log('getHistoricalPairReturns ', startDateTimestamp, currentPairData, pairSnapshots, currentETHPrice);
+
   // catch case where data not puplated yet
   if (!specialCase) {
     if (!currentPairData.createdAtTimestamp && !currentPairData.createdAtBlockNumber) {
@@ -291,10 +291,6 @@ export async function getHistoricalPairReturns(startDateTimestamp, currentPairDa
       wrongCalc = wrongCalc || localReturns['wrongCalc'];
       const localFees = netFees + localReturns.fees
       // console.log(`index ${index} push ${localFees}, positionT1.liquidityTokenBalance${positionT1.liquidityTokenBalance}`);
-      // if (index == "1") {
-      //   debugger;
-      // }
-      // if (positionT1.liquidityTokenBalance > 0)
       formattedHistory.push({
         date: dayTimestamp,
         usdValue: currentLiquidityValue,
@@ -304,7 +300,6 @@ export async function getHistoricalPairReturns(startDateTimestamp, currentPairDa
       // netFees = localFees;
     }
   }
-  // debugger;
   // d s s s w s s s s s s s w
   if (formattedHistory.some( (x) => x?.wrongCalc ) ) {
     for (let i in formattedHistory) {
@@ -357,8 +352,8 @@ export async function getLPReturnsOnPair(user: string, pair, ethPrice: number, s
     token1PriceUSD: pair.token1.derivedETH * ethPrice
   }
 
-  console.log(pair.token0.symbol);
-  console.log(pair.token1.symbol);
+  // console.log(pair.token0.symbol);
+  // console.log(pair.token1.symbol);
   for (const index in snapshots) {
     // get positions at both bounds of the window
     let positionT0 = snapshots[index]
@@ -388,7 +383,7 @@ export async function getLPReturnsOnPair(user: string, pair, ethPrice: number, s
     uniswapReturn = uniswapReturn + results.uniswapReturn
     if (results.fees)
       fees = Math.max(fees,results.fees)
-    console.log(`getLPReturnsOnPair.index ${index}, fees ${fees}`);
+    // console.log(`getLPReturnsOnPair.index ${index}, fees ${fees}`);
   }
 
 

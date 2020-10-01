@@ -108,7 +108,7 @@ export async function getShareValueOverTime(pairAddress, timestamps) {
     query: SHARE_VALUE(pairAddress, blocks),
     fetchPolicy: 'cache-first'
   })
-  debugger;
+
   let values = []
   for (var row in result?.data) {
     let timestamp = row.split('t')[1]

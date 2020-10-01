@@ -461,11 +461,10 @@ export function useGlobalData() {
 
   useEffect(() => {
     async function fetchData() {
-      // debugger;
       let globalData = await getGlobalData(ethPrice, oldEthPrice)
 
       globalData && update(globalData)
-      // debugger;
+
       let allPairs = await getAllPairsOnMooniswap()
       updateAllPairsInMooniswap(allPairs)
 
