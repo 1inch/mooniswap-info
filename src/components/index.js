@@ -45,4 +45,75 @@ const EmptyCard = styled.div`
   height: ${({ height }) => height && height};
 `
 
+export const PageWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  padding-top: 36px;
+  padding-bottom: 80px;
+  width: 100%;
+
+  @media screen and (max-width: 600px) {
+    & > * {
+      padding: 0 12px;
+    }
+  }
+`
+
+export const ContentWrapper = styled.div`
+  display: grid;
+  justify-content: start;
+  align-items: start;
+  grid-template-columns: 1fr;
+  grid-gap: 24px;
+  max-width: 1440px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 2rem;
+  box-sizing: border-box;
+  @media screen and (max-width: 1180px) {
+    grid-template-columns: 1fr;
+    padding: 0 1rem;
+  }
+`
+
+export const ContentWrapperLarge = styled.div`
+  display: grid;
+  justify-content: start;
+  align-items: start;
+  grid-template-columns: 1fr;
+  grid-gap: 24px;
+  padding: 0 2rem;
+  margin: 0 auto;
+  box-sizing: border-box;
+  max-width: 1440px;
+  width: 100%;
+
+  @media screen and (max-width: 1282px) {
+    grid-template-columns: 1fr;
+    padding: 0 1rem;
+  }
+`
+
+export const FullWrapper = styled.div`
+  display: grid;
+  justify-content: start;
+  align-items: start;
+  grid-template-columns: 1fr;
+  grid-gap: 24px;
+  max-width: 1440px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 2rem;
+  box-sizing: border-box;
+
+  @media screen and (max-width: 1180px) {
+    grid-template-columns: 1fr;
+    padding: 0 1rem;
+  }
+`
+
+export const StyledIcon = styled.div`
+  color: ${({ theme }) => theme.text1};
+`
+
 export { Hint, Divider, Address, EmptyCard }

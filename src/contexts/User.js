@@ -6,14 +6,19 @@ import {
   USER_POSITIONS,
   USER_HISTORY,
   USER_HISTORY__PER_PAIR,
-  PAIR_DAY_DATA_BULK
+  PAIR_DAY_DATA_BULK,
+  FIRST_SNAPSHOT,
+  POSITIONS_BY_BLOCK
 } from '../apollo/queries'
-import { useTimeframe } from './Application'
+import { useTimeframe, useStartTimestamp, DEFAULT_TIMESTAMP } from './Application'
 import { timeframeOptions } from '../constants'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import { useEthPrice } from './GlobalData'
-import { getShareValueOverTime } from '../helpers'
+import { ETH, getShareValueOverTime } from '../helpers'
+import { getTimeframe, getBlocksFromTimestamps } from '../utils'
+import { getLPReturnsOnPair, getHistoricalPairReturns } from '../utils/returns'
+
 
 dayjs.extend(utc)
 
@@ -24,14 +29,84 @@ const UPDATE_USER_PAIR_HODLS_RETURNS = 'UPDATE_USER_PAIR_HODLS_RETURNS'
 
 const TRANSACTIONS_KEY = 'TRANSACTIONS_KEY'
 const POSITIONS_KEY = 'POSITIONS_KEY'
+const USER_SNAPSHOTS = 'USER_SNAPSHOTS'
+const USER_PAIR_RETURNS_KEY = 'USER_PAIR_RETURNS_KEY'
 const USER_POSITION_HISTORY_KEY = 'USER_POSITION_HISTORY_KEY'
 const USER_PAIR_HODLS_RETURNS_KEY = 'USER_PAIR_HODLS_RETURNS_KEY'
+const UPDATE_USER_PAIR_RETURNS = 'UPDATE_USER_PAIR_RETURNS'
 
 const UserContext = createContext()
 
 function useUserContext() {
   return useContext(UserContext)
 }
+
+/**
+ * For a given position (data about holding) and user, get the chart
+ * data for the fees and liquidity over time
+ * @param {*} position
+ * @param {*} account
+ */
+export function useUserPositionChart(position, account) {
+  const pairAddress = position?.pair?.id
+  const [state, { updateUserPairReturns }] = useUserContext()
+
+  // get oldest date of data to fetch
+  const startDateTimestamp = useStartTimestamp()
+
+  // get users adds and removes on this pair
+  const snapshots = useUserSnapshots(account)
+  const pairSnapshots =
+    snapshots &&
+    position &&
+    snapshots.filter(currentSnapshot => {
+      return currentSnapshot.pair.id === position.pair.id
+    })
+
+  // get data needed for calculations
+  const currentPairData = usePairData(pairAddress)
+  const [currentETHPrice] = useEthPrice()
+
+  // formatetd array to return for chart data
+  const formattedHistory = state?.[account]?.[USER_PAIR_RETURNS_KEY]?.[pairAddress]
+
+  useEffect(() => {
+    async function fetchData() {
+      let fetchedData = await getHistoricalPairReturns(
+        startDateTimestamp,
+        currentPairData,
+        pairSnapshots,
+        currentETHPrice
+      )
+      updateUserPairReturns(account, pairAddress, fetchedData)
+    }
+    if (
+      account &&
+      startDateTimestamp &&
+      pairSnapshots &&
+      !formattedHistory &&
+      currentPairData &&
+      Object.keys(currentPairData).length > 0 &&
+      pairAddress &&
+      currentETHPrice
+    ) {
+      fetchData()
+    }
+  }, [
+    account,
+    startDateTimestamp,
+    pairSnapshots,
+    formattedHistory,
+    pairAddress,
+    currentPairData,
+    currentETHPrice,
+    updateUserPairReturns,
+    position.pair.id
+  ])
+
+  return formattedHistory
+}
+
 
 function reducer(state, { type, payload }) {
   switch (type) {
@@ -57,22 +132,20 @@ function reducer(state, { type, payload }) {
       const { account, historyData } = payload
       return {
         ...state,
-        [account]: { ...state?.[account], [USER_POSITION_HISTORY_KEY]: historyData }
+        [account]: { ...state?.[account], [USER_SNAPSHOTS]: historyData }
       }
     }
 
-    case UPDATE_USER_PAIR_HODLS_RETURNS: {
-      const { account, hodlData } = payload
-      let added = {}
-      hodlData &&
-        hodlData.map(pairData => {
-          return (added[pairData.pairAddress] = pairData)
-        })
+    case UPDATE_USER_PAIR_RETURNS: {
+      const { account, pairAddress, data } = payload
       return {
         ...state,
         [account]: {
           ...state?.[account],
-          [USER_PAIR_HODLS_RETURNS_KEY]: { ...state?.[account]?.USER_PAIR_HODLS_RETURNS_KEY, ...added }
+          [USER_PAIR_RETURNS_KEY]: {
+            ...state?.[account]?.[USER_PAIR_RETURNS_KEY],
+            [pairAddress]: data
+          }
         }
       }
     }
@@ -84,6 +157,7 @@ function reducer(state, { type, payload }) {
 }
 
 const INITIAL_STATE = {}
+
 
 export default function Provider({ children }) {
   const [state, dispatch] = useReducer(reducer, INITIAL_STATE)
@@ -108,6 +182,16 @@ export default function Provider({ children }) {
     })
   }, [])
 
+  const updateUserSnapshots = useCallback((account, historyData) => {
+    dispatch({
+      type: UPDATE_USER_POSITION_HISTORY,
+      payload: {
+        account,
+        historyData
+      }
+    })
+  }, [])
+
   const updateUserPositionHistory = useCallback((account, historyData) => {
     dispatch({
       type: UPDATE_USER_POSITION_HISTORY,
@@ -128,11 +212,22 @@ export default function Provider({ children }) {
     })
   }, [])
 
+  const updateUserPairReturns = useCallback((account, pairAddress, data) => {
+    dispatch({
+      type: UPDATE_USER_PAIR_RETURNS,
+      payload: {
+        account,
+        pairAddress,
+        data
+      }
+    })
+  }, [])
+
   return (
     <UserContext.Provider
       value={useMemo(
-        () => [state, { updateTransactions, updatePositions, updateUserPositionHistory, updateUserHodlReturns }],
-        [state, updateTransactions, updatePositions, updateUserPositionHistory, updateUserHodlReturns]
+        () => [state, { updateTransactions, updatePositions, updateUserPositionHistory, updateUserHodlReturns, updateUserSnapshots, updateUserPairReturns }],
+        [state, updateTransactions, updatePositions, updateUserPositionHistory, updateUserHodlReturns, updateUserSnapshots, updateUserPairReturns]
       )}
     >
       {children}
@@ -247,10 +342,10 @@ export function useReturnsPerPairHistory(position, account) {
         token0PriceUSD: parseFloat(pairSnapshots[0].token0PriceUSD),
         token1PriceUSD: parseFloat(pairSnapshots[0].token1PriceUSD),
         assetReturn: 0,
-        uniswapReturn: 0,
+        mooniswapReturn: 0,
         netReturn: 0,
         assetChange: 0,
-        uniswapChange: 0,
+        mooniswapChange: 0,
         netChange: 0
       }
 
@@ -328,7 +423,7 @@ export function useReturnsPerPairHistory(position, account) {
           token1_amount_t0 * parseFloat(positionT1.token1PriceUSD)
 
         const imp_loss_usd = no_fees_usd - assetValueT1
-        const uniswap_return = difference_fees_usd + imp_loss_usd
+        const mooniswap_return = difference_fees_usd + imp_loss_usd
 
         // calculate value delta based on  prices_t1 - prices_t0 * token_amounts
         const assetReturn = assetValueT1 - assetValueT0
@@ -341,19 +436,19 @@ export function useReturnsPerPairHistory(position, account) {
         if (needsUpdate) {
           returns.netReturn = returns.netReturn + netValueT1 - netValueT0
           returns.assetReturn = returns.assetReturn + assetReturn
-          returns.uniswapReturn = returns.uniswapReturn + uniswap_return
+          returns.mooniswapReturn = returns.mooniswapReturn + mooniswap_return
           returns.netChange = returns.netChange + ((netValueT1 - netValueT0) / netValueT0) * 100
           returns.assetChange = returns.assetChange + (assetReturn / assetValueT0) * 100
         }
 
         const localNetReturn = returns.netReturn + netValueT1 - netValueT0
         const localAssetReturn = returns.assetReturn + assetReturn
-        const localUnsiwapReturn = returns.uniswapReturn + uniswap_return
+        const localUnsiwapReturn = returns.mooniswapReturn + mooniswap_return
 
         // calculate the weighted percent changes for each metric
         const localAssetChange = (assetReturn / assetValueT0) * 100
         const localNetChange = ((netValueT1 - netValueT0) / netValueT0) * 100
-        const localUniswapChange = localNetChange - localAssetChange
+        const localMooniswapChange = localNetChange - localAssetChange
 
         const currentLiquidityValue =
           parseFloat(positionT0.liquidityTokenBalance) * parseFloat(positionT1.sharePriceUsd)
@@ -363,10 +458,10 @@ export function useReturnsPerPairHistory(position, account) {
           usdValue: currentLiquidityValue,
           netReturn: localNetReturn,
           assetReturn: localAssetReturn,
-          uniswapReturn: localUnsiwapReturn,
+          mooniswapReturn: localUnsiwapReturn,
           netChange: localNetChange,
           assetChange: localAssetChange,
-          uniswapChange: localUniswapChange
+          mooniswapChange: localMooniswapChange
         })
       }
 
@@ -551,9 +646,8 @@ export const priceOverrides = [
 
 /**
  *
- *
+ * deprecated
  */
-
 export async function getReturns(user, pair, ethPrice) {
   const {
     data: { liquidityPositionSnapshots: history }
@@ -605,7 +699,7 @@ export async function getReturns(user, pair, ethPrice) {
     }
 
     // hard code prices before launch to get better results for stablecoins and WETH
-    if (positionT0.timestamp < 1589747086) {
+    if (positionT0.timestamp < 1597093302) {
       if (priceOverrides.includes(positionT0.pair.token0.id)) {
         positionT0.token0PriceUSD = 1
       }
@@ -614,14 +708,14 @@ export async function getReturns(user, pair, ethPrice) {
       }
 
       // WETH price
-      if (positionT0.pair.token0.id === '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2') {
-        positionT0.token0PriceUSD = 203
+      if (positionT0.pair.token0.id === ETH) {
+        positionT0.token0PriceUSD = 395.84
       }
-      if (positionT0.pair.token1.id === '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2') {
-        positionT0.token1PriceUSD = 203
+      if (positionT0.pair.token1.id === ETH) {
+        positionT0.token1PriceUSD = 395.84
       }
     }
-    if (positionT1.timestamp < 1589747086) {
+    if (positionT1.timestamp < 1597093302) {
       if (priceOverrides.includes(positionT1.pair.token0.id)) {
         positionT1.token0PriceUSD = 1
       }
@@ -629,11 +723,11 @@ export async function getReturns(user, pair, ethPrice) {
         positionT1.token1PriceUSD = 1
       }
       // WETH price
-      if (positionT1.pair.token0.id === '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2') {
-        positionT1.token0PriceUSD = 203
+      if (positionT1.pair.token0.id === ETH) {
+        positionT1.token0PriceUSD = 395.84
       }
-      if (positionT1.pair.token1.id === '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2') {
-        positionT1.token1PriceUSD = 203
+      if (positionT1.pair.token1.id === ETH) {
+        positionT1.token1PriceUSD = 395.84
       }
     }
 
@@ -671,7 +765,7 @@ export async function getReturns(user, pair, ethPrice) {
       token1_amount_t0 * parseFloat(positionT1.token1PriceUSD)
 
     // const imp_loss_usd = no_fees_usd - assetValueT1
-    // const uniswap_return = difference_fees_usd + imp_loss_usd
+    // const mooniswap_return = difference_fees_usd + imp_loss_usd
 
     // calculate value delta based on  prices_t1 - prices_t0 * token_amounts
     const assetValueChange = assetValueT1 - assetValueT0
@@ -694,9 +788,9 @@ export async function getReturns(user, pair, ethPrice) {
     netPercentChange = netPercentChange ? netPercentChange + wieghtedNetChange : wieghtedNetChange
   }
 
-  // uniswap specific return
-  let uniswapReturn = netReturn - assetReturn
-  let uniswapPercentChange = netPercentChange - assetPercentChange
+  // mooniswap specific return
+  let mooniswapReturn = netReturn - assetReturn
+  let mooniswapPercentChange = netPercentChange - assetPercentChange
 
   return {
     asset: {
@@ -707,16 +801,110 @@ export async function getReturns(user, pair, ethPrice) {
       return: netReturn,
       percent: netPercentChange
     },
-    uniswap: {
-      return: uniswapReturn,
-      percent: uniswapPercentChange
+    mooniswap: {
+      return: mooniswapReturn,
+      percent: mooniswapPercentChange
     }
   }
 }
 
+/**
+ * Store all the snapshots of liquidity activity for this account.
+ * Each snapshot is a moment when an LP position was created or updated.
+ * @param {*} account
+ */
+export function useUserSnapshots(account) {
+  const [state, { updateUserSnapshots }] = useUserContext()
+  const snapshots = state?.[account]?.[USER_SNAPSHOTS]
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        let skip = 0
+        let allResults = []
+        let found = false
+        while (!found) {
+          let result = await client.query({
+            query: USER_HISTORY,
+            variables: {
+              skip: skip,
+              user: account
+            },
+            fetchPolicy: 'cache-first'
+          })
+          allResults = allResults.concat(result.data.liquidityPositionSnapshots)
+          if (result.data.liquidityPositionSnapshots.length < 1000) {
+            found = true
+          } else {
+            skip += 1000
+          }
+        }
+        if (allResults) {
+          updateUserSnapshots(account, allResults)
+        }
+      } catch (e) {
+        console.log(e)
+      }
+    }
+    if (!snapshots && account) {
+      fetchData()
+    }
+  }, [account, snapshots, updateUserSnapshots])
+
+  return snapshots
+}
+
+
+// export function useUserPositions(account) {
+//   const [state, { updatePositions, updateUserHodlReturns }] = useUserContext()
+//   const positions = state?.[account]?.[POSITIONS_KEY]
+//   const [ethPrice] = useEthPrice()
+//
+//   useEffect(() => {
+//     async function fetchData(account) {
+//       try {
+//         let result = await client.query({
+//           query: USER_POSITIONS,
+//           variables: {
+//             user: account
+//           },
+//           fetchPolicy: 'no-cache'
+//         })
+//         if (result?.data?.liquidityPositions) {
+//           let formattedPositions = await Promise.all(
+//             result?.data?.liquidityPositions.map(async positionData => {
+//               const returnData = await getReturns(account, positionData.pair, ethPrice)
+//               return {
+//                 ...positionData,
+//                 assetReturn: returnData.asset.return,
+//                 assetPercentChange: returnData.asset.percent,
+//                 netReturn: returnData.net.return,
+//                 netPercentChange: returnData.net.percent,
+//                 mooniswapReturn: returnData.mooniswap.return,
+//                 mooniswapPercentChange: returnData.mooniswap.percent
+//               }
+//             })
+//           )
+//           updatePositions(account, formattedPositions)
+//           return formattedPositions
+//         }
+//       } catch (e) {
+//         console.log(e)
+//       }
+//     }
+//     if (!positions && account && ethPrice) {
+//       fetchData(account)
+//     }
+//   }, [account, positions, updatePositions, updateUserHodlReturns, ethPrice])
+//
+//   return positions
+// }
+
 export function useUserPositions(account) {
-  const [state, { updatePositions, updateUserHodlReturns }] = useUserContext()
+  const [state, { updatePositions }] = useUserContext()
   const positions = state?.[account]?.[POSITIONS_KEY]
+
+  const snapshots = useUserSnapshots(account)
   const [ethPrice] = useEthPrice()
 
   useEffect(() => {
@@ -732,15 +920,10 @@ export function useUserPositions(account) {
         if (result?.data?.liquidityPositions) {
           let formattedPositions = await Promise.all(
             result?.data?.liquidityPositions.map(async positionData => {
-              const returnData = await getReturns(account, positionData.pair, ethPrice)
+              const returnData = await getLPReturnsOnPair(account, positionData.pair, ethPrice, snapshots)
               return {
                 ...positionData,
-                assetReturn: returnData.asset.return,
-                assetPercentChange: returnData.asset.percent,
-                netReturn: returnData.net.return,
-                netPercentChange: returnData.net.percent,
-                uniswapReturn: returnData.uniswap.return,
-                uniswapPercentChange: returnData.uniswap.percent
+                ...returnData
               }
             })
           )
@@ -750,10 +933,105 @@ export function useUserPositions(account) {
         console.log(e)
       }
     }
-    if (!positions && account && ethPrice) {
+    if (!positions && account && ethPrice && snapshots) {
       fetchData(account)
     }
-  }, [account, positions, updatePositions, updateUserHodlReturns, ethPrice])
+  }, [account, positions, updatePositions, ethPrice, snapshots])
+
+
 
   return positions
+}
+
+
+
+/**
+ * For each day starting with min(first position timestamp, beginning of time window),
+ * get total liquidity supplied by user in USD. Format in array with date timestamps
+ * and usd liquidity value.
+ */
+export function useUserLiquidityChart(account) {
+  // formatted array to return for chart data
+  const [formattedHistory, setFormattedHistory] = useState()
+
+  const [startDateTimestamp, setStartDateTimestamp] = useState()
+  const [activeWindow] = useTimeframe()
+
+  // monitor the old date fetched
+  useEffect(() => {
+    let startTime = getTimeframe(activeWindow)
+    if ((activeWindow && startTime < startDateTimestamp) || !startDateTimestamp) {
+      setStartDateTimestamp(startTime)
+    }
+  }, [activeWindow, startDateTimestamp])
+
+  // fetch data if we havent yet
+  useEffect(() => {
+    async function fetchHistory() {
+      // set default beginning to beginning of time window
+      const utcCurrentTime = dayjs()
+      let startTime = startDateTimestamp
+
+      // if first position starts after beginning of timestamps, update startime
+      let {
+        data: { liquidityPositionSnapshots: results }
+      } = await client.query({
+        query: FIRST_SNAPSHOT,
+        variables: {
+          user: account
+        }
+      })
+
+      // catch case with no history
+      if (results?.length === 0) {
+        setFormattedHistory([])
+        return
+      }
+
+      // if first snapshot starts before window, update start of window
+      startTime = results[0].timestamp > startTime ? results[0].timestamp : startTime
+
+      // create the array of timestamps for every day in the chart
+      const timestamps = []
+      while (startTime < utcCurrentTime.unix()) {
+        timestamps.push(startTime)
+        startTime += 84600
+      }
+
+      // for each day, fetch the block number associated with day timestamp (in bulk)
+      const blocks = await getBlocksFromTimestamps(timestamps)
+
+      // for each block, get the lp positions and pair data for each
+      let { data: dayDatas } = await client.query({
+        query: POSITIONS_BY_BLOCK(account, blocks)
+      })
+
+      // for each day, map over all positions and sum USD, push value to history
+      let newData = []
+      for (var row in dayDatas) {
+        let currentDay = {}
+        let timestamp = row.split('t')[1]
+        let valueUSD = 0
+        if (timestamp) {
+          for (let i = 0; i < dayDatas[row].length; i++) {
+            let pairInfo = dayDatas[row][i]
+            const pairLiquidityValue =
+              (parseFloat(pairInfo.liquidityTokenBalance) / pairInfo.pair.totalSupply) * pairInfo.pair.reserveUSD
+            valueUSD += pairLiquidityValue
+            currentDay[pairInfo.pair.id] = pairLiquidityValue
+          }
+          currentDay.date = timestamp
+          currentDay.valueUSD = valueUSD
+        }
+        newData.push(currentDay)
+      }
+
+      setFormattedHistory(newData)
+    }
+    if (!formattedHistory && startDateTimestamp) {
+      fetchHistory()
+    }
+  }, [account, formattedHistory, startDateTimestamp])
+
+  return formattedHistory
 }
