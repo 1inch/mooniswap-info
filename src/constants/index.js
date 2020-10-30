@@ -150,5 +150,6 @@ export const SURPRESS_WARNINGS = [
   '0x0f7f961648ae6db43c75663ac7e5414eb79b5704',
   '0xe41d2489571d322189246dafa5ebde1f4699f498',
   '0x84ca8bc7997272c7cfb4d0cd3d55cd942b3c9419', // DIA
-  '0x09e64c2b61a5f1690ee6fbed9baf5d6990f8dfd0' // GRO
+  '0x09e64c2b61a5f1690ee6fbed9baf5d6990f8dfd0', // GRO
+  '0xdf574c24545e5ffecb9a659c229253d4111d87e1'
 ]
