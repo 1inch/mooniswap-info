@@ -367,7 +367,7 @@ export function getLogoUrlList(address) {
     ]
   }
   return [
-    `https://1inch.exchange/assets/tokens/${address.toLowerCase()}.png`,
+    `https://tokens.1inch.exchange/${address.toLowerCase()}.png`,
     `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/${address}/logo.png`,
   ]
 }
