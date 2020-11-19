@@ -308,7 +308,7 @@ export const PAIR_DAY_DATA_BULK = (pairs, startTimestamp) => {
 
 export const GLOBAL_CHART = gql`
     query mooniswapDayDatas($startTime: Int!) {
-        mooniswapDayDatas(where: { date_gt: $startTime }, orderBy: date, orderDirection: asc) {
+        mooniswapDayDatas(where: { date_gt: $startTime }, orderBy: date, orderDirection: desc) {
             id
             date
             totalVolumeUSD

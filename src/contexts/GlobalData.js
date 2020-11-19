@@ -250,7 +250,7 @@ const getChartData = async oldestDateToFetch => {
       fetchPolicy: 'cache-first'
     })
 
-    data = [...result.data.mooniswapDayDatas]
+    data = [...result.data.mooniswapDayDatas].reverse()
 
     if (data) {
       let dayIndexSet = new Set()
