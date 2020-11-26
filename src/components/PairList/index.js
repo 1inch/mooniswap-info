@@ -131,7 +131,7 @@ const FIELD_TO_VALUE = {
   [SORT_FIELD.VOL]: 'oneDayVolumeUSD',
   [SORT_FIELD.TXNS]: 'oneDayTxns',
   [SORT_FIELD.VOL_7DAYS]: 'oneWeekVolumeUSD',
-  [SORT_FIELD.FEES]: 'oneDayExtraFee'
+  [SORT_FIELD.FEES]: 'oneDayTotalFee'
 }
 
 
