@@ -305,7 +305,7 @@ function PairPage({ pairAddress, history }) {
                   <RowBetween>
                     <TYPE.main>
                       Fees (24hrs)
-                      <Question style={{ marginLeft: 2 }} text="0.15 percent swap earning + LP slippage profit"/>
+                      <Question style={{ marginLeft: 2 }} text="0.3 percent swap earning + LP slippage profit"/>
                     </TYPE.main>
                     <div />
                   </RowBetween>
@@ -313,8 +313,8 @@ function PairPage({ pairAddress, history }) {
                     <TYPE.main fontSize={'2rem'} lineHeight={1} fontWeight={600}>
                       {oneDayVolumeUSD
                         ? !oneDayExtraFee || oneDayExtraFee <= 0
-                          ? formattedNum(oneDayVolumeUSD * 0.0015, true)
-                          : formattedNum(oneDayVolumeUSD * 0.0015, true) + ' + ' + formattedNum(oneDayExtraFee, true)
+                          ? formattedNum(oneDayVolumeUSD * 0.003, true)
+                          : formattedNum(oneDayVolumeUSD * 0.003, true) + ' + ' + formattedNum(oneDayExtraFee, true)
                         : oneDayVolumeUSD === 0
                         ? '$0'
                         : '-'}

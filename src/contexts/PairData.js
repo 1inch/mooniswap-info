@@ -273,9 +273,9 @@ async function getBulkPairData(pairList, ethPrice) {
         )
 
         let [totalFeeOneDay, feeChangeUSD] = get2DayPercentChange(
-          extraFee0Now + extraFee1Now + (volumeUsdNow * 0.0015),
-          extraFee0DayAgo + extraFee1DayAgo + (volumeUsdOneDay * 0.0015),
-          extraFee0TwoDaysAgo + extraFee1DayAgo + (volumeUsdTwoDay * 0.0015)
+          extraFee0Now + extraFee1Now + (volumeUsdNow * 0.003),
+          extraFee0DayAgo + extraFee1DayAgo + (volumeUsdOneDay * 0.003),
+          extraFee0TwoDaysAgo + extraFee1DayAgo + (volumeUsdTwoDay * 0.003)
         // extraFee0Now + extraFee1Now,
         //   extraFee0DayAgo + extraFee1DayAgo,
         //   extraFee0TwoDaysAgo + extraFee1DayAgo
@@ -398,9 +398,9 @@ const getPairData = async (address, ethPrice) => {
     )
 
     const [totalFeeOneDay, feeChangeUSD] = get2DayPercentChange(
-      extraFee0Now + extraFee1Now + (volumeUsdNow * 0.0015),
-      extraFee0DayAgo + extraFee1DayAgo + (volumeUsdOneDay * 0.0015),
-      extraFee0TwoDaysAgo + extraFee1DayAgo + (volumeUsdTwoDay * 0.0015)
+      extraFee0Now + extraFee1Now + (volumeUsdNow * 0.003),
+      extraFee0DayAgo + extraFee1DayAgo + (volumeUsdOneDay * 0.003),
+      extraFee0TwoDaysAgo + extraFee1DayAgo + (volumeUsdTwoDay * 0.003)
       // extraFee0Now + extraFee1Now,
       // extraFee0DayAgo + extraFee1DayAgo,
       // extraFee0TwoDaysAgo + extraFee1DayAgo
