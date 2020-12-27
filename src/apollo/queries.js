@@ -2,31 +2,31 @@ import gql from 'graphql-tag'
 import { FACTORY_ADDRESS, BUNDLE_ID } from '../constants'
 
 export const V1_DATA_QUERY = gql`
-  query uniswap($date: Int!, $date2: Int!) {
-    current: uniswap(id: "1") {
-      totalVolumeUSD
-      totalLiquidityUSD
-      txCount
+    query mooniswap($date: Int!, $date2: Int!) {
+        current: mooniswap(id: "1") {
+            totalVolumeUSD
+            totalLiquidityUSD
+            txCount
+        }
+        oneDay: mooniswapHistoricalDatas(where: { timestamp_lt: $date }, first: 1, orderBy: timestamp, orderDirection: desc) {
+            totalVolumeUSD
+            totalLiquidityUSD
+            txCount
+        }
+        twoDay: mooniswapHistoricalDatas(
+            where: { timestamp_lt: $date2 }
+            first: 1
+            orderBy: timestamp
+            orderDirection: desc
+        ) {
+            totalVolumeUSD
+            totalLiquidityUSD
+            txCount
+        }
+        exchanges(first: 200, orderBy: ethBalance, orderDirection: desc) {
+            ethBalance
+        }
     }
-    oneDay: uniswapHistoricalDatas(where: { timestamp_lt: $date }, first: 1, orderBy: timestamp, orderDirection: desc) {
-      totalVolumeUSD
-      totalLiquidityUSD
-      txCount
-    }
-    twoDay: uniswapHistoricalDatas(
-      where: { timestamp_lt: $date2 }
-      first: 1
-      orderBy: timestamp
-      orderDirection: desc
-    ) {
-      totalVolumeUSD
-      totalLiquidityUSD
-      txCount
-    }
-    exchanges(first: 200, orderBy: ethBalance, orderDirection: desc) {
-      ethBalance
-    }
-  }
 `
 
 export const GET_BLOCK = gql`
@@ -192,7 +192,7 @@ export const USER_POSITIONS = gql`
 
 export const USER_TRANSACTIONS = gql`
   query transactions($user: Bytes!) {
-    mints(orderBy: timestamp, orderDirection: desc, where: { to: $user }) {
+    mints(orderBy: timestamp, orderDirection: desc) {
       id
       transaction {
         id
@@ -209,7 +209,6 @@ export const USER_TRANSACTIONS = gql`
           symbol
         }
       }
-      to
       liquidity
       amount0
       amount1
@@ -231,13 +230,12 @@ export const USER_TRANSACTIONS = gql`
         }
       }
       sender
-      to
       liquidity
       amount0
       amount1
       amountUSD
     }
-    swaps(orderBy: timestamp, orderDirection: desc, where: { to: $user }) {
+    swaps(orderBy: timestamp, orderDirection: desc) {
       id
       transaction {
         id
@@ -251,12 +249,9 @@ export const USER_TRANSACTIONS = gql`
           symbol
         }
       }
-      amount0In
-      amount0Out
-      amount1In
-      amount1Out
+      srcAmount
+      destAmount
       amountUSD
-      to
     }
   }
 `
@@ -312,32 +307,32 @@ export const PAIR_DAY_DATA_BULK = (pairs, startTimestamp) => {
 }
 
 export const GLOBAL_CHART = gql`
-  query uniswapDayDatas($startTime: Int!) {
-    uniswapDayDatas(where: { date_gt: $startTime }, orderBy: date, orderDirection: asc) {
-      id
-      date
-      totalVolumeUSD
-      dailyVolumeUSD
-      dailyVolumeETH
-      totalLiquidityUSD
-      totalLiquidityETH
-      mostLiquidTokens {
-        id
-        totalLiquidityETH
-        totalLiquidityUSD
-        token {
-          id
-          symbol
+    query mooniswapDayDatas($startTime: Int!) {
+        mooniswapDayDatas(where: { date_gt: $startTime }, orderBy: date, orderDirection: desc) {
+            id
+            date
+            totalVolumeUSD
+            dailyVolumeUSD
+            dailyVolumeETH
+            totalLiquidityUSD
+            totalLiquidityETH
+            mostLiquidTokens {
+                id
+                totalLiquidityETH
+                totalLiquidityUSD
+                token {
+                    id
+                    symbol
+                }
+            }
         }
-      }
     }
-  }
 `
 
 export const GLOBAL_DATA = block => {
   const queryString = block
-    ? ` query uniswapFactories {
-      uniswapFactories(block:   
+    ? ` query mooniswapFactories {
+      mooniswapFactories(block:   
        {number: ${block}} 
        where: { id: "${FACTORY_ADDRESS}" }) {
         id
@@ -348,8 +343,8 @@ export const GLOBAL_DATA = block => {
         txCount
       }
     }`
-    : `query uniswapFactories {
-      uniswapFactories(
+    : `query mooniswapFactories {
+      mooniswapFactories(
         where: { id: "${FACTORY_ADDRESS}" }) {
         id
         totalVolumeUSD
@@ -381,7 +376,7 @@ export const GLOBAL_TXNS = gql`
             symbol
           }
         }
-        to
+        sender
         liquidity
         amount0
         amount1
@@ -423,12 +418,12 @@ export const GLOBAL_TXNS = gql`
             symbol
           }
         }
-        amount0In
-        amount0Out
-        amount1In
-        amount1Out
+        sender
+        srcAmount
+        destAmount
         amountUSD
-        to
+        src
+        dest
       }
     }
   }
@@ -463,6 +458,8 @@ export const PAIR_DATA = (pairAddress, block) => {
         trackedReserveETH
         reserveETH
         volumeUSD
+        lpExtraFeeInToken0
+        lpExtraFeeInToken1
       }
     }`
     : ` query pairs {
@@ -491,6 +488,8 @@ export const PAIR_DATA = (pairAddress, block) => {
         totalSupply
         trackedReserveETH
         volumeUSD
+        lpExtraFeeInToken0
+        lpExtraFeeInToken1
       }
     }`
 
@@ -512,6 +511,8 @@ export const PAIRS_DYNAMIC_BULK = (block, pairs) => {
       trackedReserveETH
       volumeUSD
       totalSupply
+      lpExtraFeeInToken0
+      lpExtraFeeInToken1
     }
   }
   `
@@ -544,6 +545,8 @@ export const PAIRS_BULK = gql`
       trackedReserveETH
       volumeUSD
       createdAtBlockNumber
+      lpExtraFeeInToken0
+      lpExtraFeeInToken1
     }
   }
 `
@@ -556,6 +559,17 @@ export const ALL_TOKENS = gql`
       symbol
     }
   }
+`
+
+export const ALL_TOKENS_BY_BLOCK = (block) => gql`
+    query tokens($skip: Int!) {
+        tokens(first: 1000, skip: $skip, block: {number: ${block}}) {
+            id
+            name
+            symbol
+            derivedETH
+        }
+    }
 `
 
 export const ALL_PAIRS = gql`
@@ -695,7 +709,7 @@ export const FILTERED_TRANSACTIONS = gql`
           symbol
         }
       }
-      to
+      sender
       liquidity
       amount0
       amount1
@@ -738,12 +752,12 @@ export const FILTERED_TRANSACTIONS = gql`
           symbol
         }
       }
-      amount0In
-      amount0Out
-      amount1In
-      amount1Out
+      sender
+      srcAmount
+      destAmount
       amountUSD
-      to
+      src
+      dest
     }
   }
 `

@@ -13,6 +13,7 @@ import PairChart from '../components/PairChart'
 import Link from '../components/Link'
 import TxnList from '../components/TxnList'
 import Loader from '../components/Loader'
+import Question from '../components/Question'
 
 import { formattedNum, formattedPercent, getPoolLink, getSwapLink } from '../helpers'
 import { useColor } from '../hooks'
@@ -26,8 +27,8 @@ import TokenLogo from '../components/TokenLogo'
 import { Hover } from '../components'
 import { useEthPrice } from '../contexts/GlobalData'
 import Warning from '../components/Warning'
-import { SURPRESS_WARNINGS } from '../constants'
 import { usePathDismissed } from '../contexts/LocalStorage'
+import { useVerifiedTokens } from '../contexts/TokenData'
 
 const PageWrapper = styled.div`
   display: flex;
@@ -136,8 +137,12 @@ function PairPage({ pairAddress, history }) {
     volumeChangeUSD,
     liquidityChangeUSD,
     oneDayTxns,
-    txnChange
+    txnChange,
+    oneDayExtraFee,
+    extraFeeChangeUSD
   } = usePairData(pairAddress)
+
+  const verifiedTokens = useVerifiedTokens()
 
   useEffect(() => {
     document.querySelector('body').scrollTo(0, 0)
@@ -165,6 +170,7 @@ function PairPage({ pairAddress, history }) {
   // volume
   const volume = oneDayVolumeUSD ? formattedNum(oneDayVolumeUSD, true) : oneDayVolumeUSD === 0 ? '$0' : '-'
   const volumeChange = formattedPercent(volumeChangeUSD)
+  const feePercentChange = formattedPercent(extraFeeChangeUSD)
 
   // token data for usd
   const [ethPrice] = useEthPrice()
@@ -191,12 +197,12 @@ function PairPage({ pairAddress, history }) {
       <ThemedBackground backgroundColor={transparentize(0.6, backgroundColor)} />
       <Warning
         type={'pair'}
-        show={!dismissed && !(SURPRESS_WARNINGS.includes(token0?.id) && SURPRESS_WARNINGS.includes(token1?.id))}
+        show={!dismissed && verifiedTokens && (!(verifiedTokens.includes(token0?.id) && verifiedTokens.includes(token1?.id)) && token1 && token0)}
         setShow={markAsDismissed}
         address={pairAddress}
       />
       <WarningGrouping
-        disabled={!dismissed && !(SURPRESS_WARNINGS.includes(token0?.id) && SURPRESS_WARNINGS.includes(token1?.id))}
+        disabled={!dismissed && (!verifiedTokens || !(verifiedTokens.includes(token0?.id) && verifiedTokens.includes(token1?.id)))}
       >
         <RowBetween mt={20} style={{ flexWrap: 'wrap' }}>
           <RowFixed style={{ flexWrap: 'wrap' }}>
@@ -297,18 +303,29 @@ function PairPage({ pairAddress, history }) {
               <Panel style={{ height: '100%' }}>
                 <AutoColumn gap="20px">
                   <RowBetween>
-                    <TYPE.main>Fees (24hrs)</TYPE.main>
+                    <TYPE.main>
+                      Fees (24hrs)
+                      <Question style={{ marginLeft: 2 }} text="0.3 percent swap earning + LP slippage profit"/>
+                    </TYPE.main>
                     <div />
                   </RowBetween>
                   <RowBetween align="flex-end">
                     <TYPE.main fontSize={'2rem'} lineHeight={1} fontWeight={600}>
                       {oneDayVolumeUSD
-                        ? formattedNum(oneDayVolumeUSD * 0.003, true)
+                        ? !oneDayExtraFee || oneDayExtraFee <= 0
+                          ? formattedNum(oneDayVolumeUSD * 0.003, true)
+                          : formattedNum(oneDayVolumeUSD * 0.003, true) + ' + ' + formattedNum(oneDayExtraFee, true)
                         : oneDayVolumeUSD === 0
                         ? '$0'
                         : '-'}
                     </TYPE.main>
-                    <TYPE.main>{volumeChange}</TYPE.main>
+                    <TYPE.main>
+                      {
+                        !oneDayExtraFee || oneDayExtraFee <= 0
+                          ? volumeChange
+                          : feePercentChange
+                      }
+                    </TYPE.main>
                   </RowBetween>
                 </AutoColumn>
               </Panel>

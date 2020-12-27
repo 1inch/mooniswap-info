@@ -15,23 +15,22 @@ BigNumber.set({ EXPONENTIAL_AT: 50 })
 
 dayjs.extend(utc)
 
+export const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000'
+export const ETH = ADDRESS_ZERO
+
 export function getPoolLink(token0Address, token1Address = null) {
   if (!token1Address) {
-    return `https://uniswap.exchange/add/${token0Address}-${
-      token0Address === '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
-        ? 'ETH'
-        : '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
-    }`
+    return `https://mooniswap.exchange/#/add/${token0Address}/${token0Address}`
   } else {
-    return `https://uniswap.exchange/add/${token0Address}-${token1Address}`
+    return `https://mooniswap.exchange/#/add/${token0Address}/${token1Address}`
   }
 }
 
 export function getSwapLink(token0Address, token1Address = null) {
   if (!token1Address) {
-    return `https://uniswap.exchange/swap?inputCurrency=${token0Address}`
+    return `https://mooniswap.exchange/#/swap?inputCurrency=${token0Address}`
   } else {
-    return `https://uniswap.exchange/swap?inputCurrency=${token0Address}&outputCurrency=${token1Address}`
+    return `https://mooniswap.exchange/#/swap?inputCurrency=${token0Address}&outputCurrency=${token1Address}`
   }
 }
 
@@ -252,16 +251,16 @@ export const formattedNum = (number, usd = false, acceptNegatives = false) => {
   if (num < 0.0001) {
     if (acceptNegatives) {
       return usd
-        ? '$' + Number(parseFloat(num).toFixed(4)).toLocaleString()
-        : '' + Number(parseFloat(num).toFixed(4)).toLocaleString()
+        ? '$' + Number(parseFloat(num).toFixed(4)).toLocaleString('ru-Ru')
+        : '' + Number(parseFloat(num).toFixed(4)).toLocaleString('ru-Ru')
     }
     return usd ? '< $0.0001' : '< 0.0001'
   }
 
   if (num > 1000) {
     return usd
-      ? '$' + Number(parseFloat(num).toFixed(0)).toLocaleString()
-      : '' + Number(parseFloat(num).toFixed(0)).toLocaleString()
+      ? '$' + Number(parseFloat(num).toFixed(0)).toLocaleString('ru-Ru')
+      : '' + Number(parseFloat(num).toFixed(0)).toLocaleString('ru-Ru')
   }
 
   if (usd) {
@@ -359,4 +358,16 @@ export function isEquivalent(a, b) {
     }
   }
   return true
+}
+
+export function getLogoUrlList(address) {
+  if (!address) {
+    return [
+      'https://etherscan.io/images/main/empty-token.png'
+    ]
+  }
+  return [
+    `https://tokens.1inch.exchange/${address.toLowerCase()}.png`,
+    `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/${address}/logo.png`,
+  ]
 }

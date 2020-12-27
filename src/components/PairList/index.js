@@ -48,6 +48,8 @@ const DashGrid = styled.div`
   :hover {
     cursor: ${({ focus }) => focus && 'pointer'};
     background-color: ${({ focus, theme }) => focus && theme.bg3};
+    margin: 0 -20px;
+    padding: 0 20px;
   }
 
   > * {
@@ -110,14 +112,17 @@ const SORT_FIELD = {
 }
 
 const FIELD_TO_VALUE = {
-  [SORT_FIELD.LIQ]: 'trackedReserveETH', // sort with tracked volume only
+  // trackedReserveETH - to sort with tracked volume only
+  [SORT_FIELD.LIQ]: 'reserveUSD', //
   [SORT_FIELD.VOL]: 'oneDayVolumeUSD',
   [SORT_FIELD.TXNS]: 'oneDayTxns',
   [SORT_FIELD.VOL_7DAYS]: 'oneWeekVolumeUSD',
-  [SORT_FIELD.FEES]: 'oneDayVolumeUSD'
+  [SORT_FIELD.FEES]: 'oneDayTotalFee'
 }
 
+
 function PairList({ pairs, color, history, disbaleLinks, maxItems = 10 }) {
+
   const below600 = useMedia('(max-width: 600px)')
   const below740 = useMedia('(max-width: 740px)')
   const below1080 = useMedia('(max-width: 1080px)')
@@ -158,9 +163,22 @@ function PairList({ pairs, color, history, disbaleLinks, maxItems = 10 }) {
         pairData.token0.symbol = 'ETH'
       }
 
+      if (pairData.token0.id === '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2') {
+        pairData.token0.name = 'ETH (Wrapped)'
+        pairData.token0.symbol = 'ETH'
+      }
+
       if (pairData.token1.id === '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2') {
         pairData.token1.name = 'ETH (Wrapped)'
         pairData.token1.symbol = 'ETH'
+      }
+
+      if (pairData.token1.id === '0xdf5e0e81dff6faf3a7e52ba697820c5e32d806a8') {
+        pairData.token1.symbol = 'yCRV'
+      }
+
+      if (pairData.token0.id === '0xdf5e0e81dff6faf3a7e52ba697820c5e32d806a8') {
+        pairData.token1.symbol = 'yCRV'
       }
 
       return (
@@ -178,14 +196,16 @@ function PairList({ pairs, color, history, disbaleLinks, maxItems = 10 }) {
               a1={pairData.token1.id}
               margin={!below740}
             />
-            <CustomLink style={{ marginLeft: '20px', whiteSpace: 'nowrap' }} to={'/pair/' + pairAddress} color={color}>
-              {pairData.token0.symbol + '-' + pairData.token1.symbol}
-            </CustomLink>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <CustomLink style={{ marginLeft: '20px', whiteSpace: 'nowrap' }} to={'/pair/' + pairAddress} color={color}>
+                {pairData.token0.symbol + '-' + pairData.token1.symbol}
+              </CustomLink>
+            </div>
           </DataText>
           <DataText area="liq">{liquidity}</DataText>
           <DataText area="vol">{volume}</DataText>
           {!below1080 && <DataText area="volWeek">{formattedNum(pairData.oneWeekVolumeUSD, true)}</DataText>}
-          {!below1080 && <DataText area="fees">{formattedNum(pairData.oneDayVolumeUSD * 0.003, true)}</DataText>}
+          {!below1080 && <DataText area="fees">{formattedNum(pairData.oneDayTotalFee, true)}</DataText>}
           {!below740 &&
             (disbaleLinks ? (
               <Flex area="pool" justifyContent="flex-end" alignItems="center">
@@ -237,7 +257,7 @@ function PairList({ pairs, color, history, disbaleLinks, maxItems = 10 }) {
 
   return (
     <ListWrapper>
-      <DashGrid center={true} disbaleLinks={disbaleLinks} style={{ height: 'fit-content', padding: '0 0 1rem 0' }}>
+      <DashGrid center={true} disbaleLinks={disbaleLinks} style={{ height: 'fit-content', padding: '0 0 1rem 0', margin: 0 }}>
         <Flex alignItems="center" justifyContent="flexStart">
           <Text area="name" fontWeight="500">
             Name

@@ -64,6 +64,8 @@ const DashGrid = styled.div`
     :hover {
       cursor: ${({ focus }) => focus && 'pointer'};
       background-color: ${({ focus, theme }) => focus && theme.bg3};
+      margin: 0 -20px;
+      padding: 0 20px;
     }
 
     > * {
@@ -203,7 +205,7 @@ function TopTokenList({ tokens, history, itemMax = 10 }) {
 
   return (
     <ListWrapper>
-      <DashGrid center={true} style={{ height: 'fit-content', padding: '0 0 1rem 0' }}>
+      <DashGrid center={true} style={{ height: 'fit-content', padding: '0 0 1rem 0', margin: 0 }}>
         <Flex alignItems="center" justifyContent="flexStart">
           <ClickableText
             color="text"
@@ -286,6 +288,9 @@ function TopTokenList({ tokens, history, itemMax = 10 }) {
       <List p={0}>
         {filteredList &&
           filteredList.map((item, index) => {
+            if (item?.id === '0xdf5e0e81dff6faf3a7e52ba697820c5e32d806a8') {
+              item.symbol = 'yCRV';
+            }
             return (
               <div key={index}>
                 <ListItem key={index} index={(page - 1) * 10 + index + 1} item={item} />

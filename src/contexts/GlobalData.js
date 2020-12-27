@@ -5,17 +5,16 @@ import utc from 'dayjs/plugin/utc'
 import { useTimeframe } from './Application'
 import { timeframeOptions } from '../constants'
 import { getPercentChange, getBlockFromTimestamp, getBlocksFromTimestamps, get2DayPercentChange } from '../helpers'
-import { GLOBAL_DATA, GLOBAL_TXNS, GLOBAL_CHART, ETH_PRICE, ALL_PAIRS, ALL_TOKENS, PAIR_CHART } from '../apollo/queries'
+import { GLOBAL_DATA, GLOBAL_TXNS, GLOBAL_CHART, ETH_PRICE, ALL_PAIRS, ALL_TOKENS } from '../apollo/queries'
 import weekOfYear from 'dayjs/plugin/weekOfYear'
-import { getV1Data } from './V1Data'
 
 const UPDATE = 'UPDATE'
 const UPDATE_TXNS = 'UPDATE_TXNS'
 const UPDATE_CHART = 'UPDATE_CHART'
 const UPDATE_ETH_PRICE = 'UPDATE_ETH_PRICE'
 const ETH_PRICE_KEY = 'ETH_PRICE_KEY'
-const UPDATE_ALL_PAIRS_IN_UNISWAP = 'UPDAUPDATE_ALL_PAIRS_IN_UNISWAPTE_TOP_PAIRS'
-const UPDATE_ALL_TOKENS_IN_UNISWAP = 'UPDATE_ALL_TOKENS_IN_UNISWAP'
+const UPDATE_ALL_PAIRS_IN_MOONISWAP = 'UPDAUPDATE_ALL_PAIRS_IN_MOONISWAPTE_TOP_PAIRS'
+const UPDATE_ALL_TOKENS_IN_MOONISWAP = 'UPDATE_ALL_TOKENS_IN_MOONISWAP'
 
 dayjs.extend(utc)
 dayjs.extend(weekOfYear)
@@ -61,7 +60,7 @@ function reducer(state, { type, payload }) {
       }
     }
 
-    case UPDATE_ALL_PAIRS_IN_UNISWAP: {
+    case UPDATE_ALL_PAIRS_IN_MOONISWAP: {
       const { allPairs } = payload
       return {
         ...state,
@@ -69,7 +68,7 @@ function reducer(state, { type, payload }) {
       }
     }
 
-    case UPDATE_ALL_TOKENS_IN_UNISWAP: {
+    case UPDATE_ALL_TOKENS_IN_MOONISWAP: {
       const { allTokens } = payload
       return {
         ...state,
@@ -123,18 +122,18 @@ export default function Provider({ children }) {
     })
   }, [])
 
-  const updateAllPairsInUniswap = useCallback(allPairs => {
+  const updateAllPairsInMooniswap = useCallback(allPairs => {
     dispatch({
-      type: UPDATE_ALL_PAIRS_IN_UNISWAP,
+      type: UPDATE_ALL_PAIRS_IN_MOONISWAP,
       payload: {
         allPairs
       }
     })
   }, [])
 
-  const updateAllTokensInUniswap = useCallback(allTokens => {
+  const updateAllTokensInMooniswap = useCallback(allTokens => {
     dispatch({
-      type: UPDATE_ALL_TOKENS_IN_UNISWAP,
+      type: UPDATE_ALL_TOKENS_IN_MOONISWAP,
       payload: {
         allTokens
       }
@@ -145,7 +144,7 @@ export default function Provider({ children }) {
       value={useMemo(
         () => [
           state,
-          { update, updateTransactions, updateChart, updateEthPrice, updateAllPairsInUniswap, updateAllTokensInUniswap }
+          { update, updateTransactions, updateChart, updateEthPrice, updateAllPairsInMooniswap, updateAllTokensInMooniswap }
         ],
         [
           state,
@@ -153,8 +152,8 @@ export default function Provider({ children }) {
           updateTransactions,
           updateChart,
           updateEthPrice,
-          updateAllPairsInUniswap,
-          updateAllTokensInUniswap
+          updateAllPairsInMooniswap,
+          updateAllTokensInMooniswap
         ]
       )}
     >
@@ -183,18 +182,18 @@ async function getGlobalData(ethPrice, oldEthPrice) {
       query: GLOBAL_DATA(),
       fetchPolicy: 'cache-first'
     })
-    data = result.data.uniswapFactories[0]
+    data = result.data.mooniswapFactories[0]
     let oneDayResult = await client.query({
       query: GLOBAL_DATA(oneDayBlock?.number),
       fetchPolicy: 'cache-first'
     })
-    oneDayData = oneDayResult.data.uniswapFactories[0]
+    oneDayData = oneDayResult.data.mooniswapFactories[0]
 
     let twoDayResult = await client.query({
       query: GLOBAL_DATA(twoDayBlock?.number),
       fetchPolicy: 'cache-first'
     })
-    twoDayData = twoDayResult.data.uniswapFactories[0]
+    twoDayData = twoDayResult.data.mooniswapFactories[0]
 
     if (data && oneDayData && twoDayData) {
       let [oneDayVolumeUSD, volumeChangeUSD] = get2DayPercentChange(
@@ -228,9 +227,6 @@ async function getGlobalData(ethPrice, oldEthPrice) {
       data.liquidityChangeUSD = liquidityChangeUSD
       data.oneDayTxns = oneDayTxns
       data.txnChange = txnChange
-
-      const v1Data = await getV1Data()
-      data.v1Data = v1Data
     }
   } catch (e) {
     console.log(e)
@@ -254,23 +250,7 @@ const getChartData = async oldestDateToFetch => {
       fetchPolicy: 'cache-first'
     })
 
-    let blockedResult = await client.query({
-      query: PAIR_CHART,
-      variables: {
-        pairAddress: '0xed9c854cb02de75ce4c9bba992828d6cb7fd5c71'
-      },
-      fetchPolicy: 'cache-first'
-    })
-
-    let blockedResultOther = await client.query({
-      query: PAIR_CHART,
-      variables: {
-        pairAddress: '0x257d37ce4d0796ea2efebcb49b46e34002cc65d3'
-      },
-      fetchPolicy: 'cache-first'
-    })
-
-    data = [...result.data.uniswapDayDatas]
+    data = [...result.data.mooniswapDayDatas].reverse()
 
     if (data) {
       let dayIndexSet = new Set()
@@ -281,18 +261,6 @@ const getChartData = async oldestDateToFetch => {
         dayIndexSet.add((data[i].date / oneDay).toFixed(0))
         dayIndexArray.push(data[i])
         dayData.dailyVolumeUSD = parseFloat(dayData.dailyVolumeUSD)
-        blockedResult.data.pairDayDatas.map(blockedDay => {
-          if (blockedDay.date === dayData.date && dayData.dailyVolumeUSD > blockedDay.dailyVolumeUSD) {
-            dayData.dailyVolumeUSD = dayData.dailyVolumeUSD - parseFloat(blockedDay.dailyVolumeUSD)
-          }
-          return true
-        })
-        blockedResultOther.data.pairDayDatas.map(blockedDay => {
-          if (blockedDay.date === dayData.date && dayData.dailyVolumeUSD > blockedDay.dailyVolumeUSD) {
-            dayData.dailyVolumeUSD = dayData.dailyVolumeUSD - parseFloat(blockedDay.dailyVolumeUSD)
-          }
-          return true
-        })
       })
 
       // fill in empty days
@@ -351,6 +319,7 @@ const getGlobalTransactions = async () => {
     transactions.mints = []
     transactions.burns = []
     transactions.swaps = []
+
     result?.data?.transactions &&
       result.data.transactions.map(transaction => {
         if (transaction.mints.length > 0) {
@@ -410,7 +379,7 @@ const getEthPrice = async () => {
   return [ethPrice, ethPriceOneDay, priceChangeETH]
 }
 
-async function getAllPairsOnUniswap() {
+async function getAllPairsOnMooniswap() {
   try {
     let allFound = false
     let pairs = []
@@ -435,7 +404,7 @@ async function getAllPairsOnUniswap() {
   }
 }
 
-async function getAllTokensOnUniswap() {
+async function getAllTokensOnMooniswap() {
   try {
     let allFound = false
     let skipCount = 0
@@ -461,7 +430,7 @@ async function getAllTokensOnUniswap() {
 }
 
 export function useGlobalData() {
-  const [state, { update, updateAllPairsInUniswap, updateAllTokensInUniswap }] = useGlobalDataContext()
+  const [state, { update, updateAllPairsInMooniswap, updateAllTokensInMooniswap }] = useGlobalDataContext()
   const [ethPrice, oldEthPrice] = useEthPrice()
 
   const data = state?.globalData
@@ -471,16 +440,16 @@ export function useGlobalData() {
       let globalData = await getGlobalData(ethPrice, oldEthPrice)
       globalData && update(globalData)
 
-      let allPairs = await getAllPairsOnUniswap()
-      updateAllPairsInUniswap(allPairs)
+      let allPairs = await getAllPairsOnMooniswap()
+      updateAllPairsInMooniswap(allPairs)
 
-      let allTokens = await getAllTokensOnUniswap()
-      updateAllTokensInUniswap(allTokens)
+      let allTokens = await getAllTokensOnMooniswap()
+      updateAllTokensInMooniswap(allTokens)
     }
     if (!data && ethPrice && oldEthPrice) {
       fetchData()
     }
-  }, [ethPrice, oldEthPrice, update, data, updateAllPairsInUniswap, updateAllTokensInUniswap])
+  }, [ethPrice, oldEthPrice, update, data, updateAllPairsInMooniswap, updateAllTokensInMooniswap])
 
   return data || {}
 }
@@ -562,14 +531,14 @@ export function useEthPrice() {
   return [ethPrice, ethPriceOld]
 }
 
-export function useAllPairsInUniswap() {
+export function useAllPairsInMooniswap() {
   const [state] = useGlobalDataContext()
   let allPairs = state?.allPairs
 
   return allPairs || []
 }
 
-export function useAllTokensInUniswap() {
+export function useAllTokensInMooniswap() {
   const [state] = useGlobalDataContext()
   let allTokens = state?.allTokens
 

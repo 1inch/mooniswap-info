@@ -13,7 +13,7 @@ import { timeframeOptions } from '../constants'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import { useEthPrice } from './GlobalData'
-import { getShareValueOverTime } from '../helpers'
+import { ETH, getShareValueOverTime } from '../helpers'
 
 dayjs.extend(utc)
 
@@ -247,10 +247,10 @@ export function useReturnsPerPairHistory(position, account) {
         token0PriceUSD: parseFloat(pairSnapshots[0].token0PriceUSD),
         token1PriceUSD: parseFloat(pairSnapshots[0].token1PriceUSD),
         assetReturn: 0,
-        uniswapReturn: 0,
+        mooniswapReturn: 0,
         netReturn: 0,
         assetChange: 0,
-        uniswapChange: 0,
+        mooniswapChange: 0,
         netChange: 0
       }
 
@@ -328,7 +328,7 @@ export function useReturnsPerPairHistory(position, account) {
           token1_amount_t0 * parseFloat(positionT1.token1PriceUSD)
 
         const imp_loss_usd = no_fees_usd - assetValueT1
-        const uniswap_return = difference_fees_usd + imp_loss_usd
+        const mooniswap_return = difference_fees_usd + imp_loss_usd
 
         // calculate value delta based on  prices_t1 - prices_t0 * token_amounts
         const assetReturn = assetValueT1 - assetValueT0
@@ -341,19 +341,19 @@ export function useReturnsPerPairHistory(position, account) {
         if (needsUpdate) {
           returns.netReturn = returns.netReturn + netValueT1 - netValueT0
           returns.assetReturn = returns.assetReturn + assetReturn
-          returns.uniswapReturn = returns.uniswapReturn + uniswap_return
+          returns.mooniswapReturn = returns.mooniswapReturn + mooniswap_return
           returns.netChange = returns.netChange + ((netValueT1 - netValueT0) / netValueT0) * 100
           returns.assetChange = returns.assetChange + (assetReturn / assetValueT0) * 100
         }
 
         const localNetReturn = returns.netReturn + netValueT1 - netValueT0
         const localAssetReturn = returns.assetReturn + assetReturn
-        const localUnsiwapReturn = returns.uniswapReturn + uniswap_return
+        const localUnsiwapReturn = returns.mooniswapReturn + mooniswap_return
 
         // calculate the weighted percent changes for each metric
         const localAssetChange = (assetReturn / assetValueT0) * 100
         const localNetChange = ((netValueT1 - netValueT0) / netValueT0) * 100
-        const localUniswapChange = localNetChange - localAssetChange
+        const localMooniswapChange = localNetChange - localAssetChange
 
         const currentLiquidityValue =
           parseFloat(positionT0.liquidityTokenBalance) * parseFloat(positionT1.sharePriceUsd)
@@ -363,10 +363,10 @@ export function useReturnsPerPairHistory(position, account) {
           usdValue: currentLiquidityValue,
           netReturn: localNetReturn,
           assetReturn: localAssetReturn,
-          uniswapReturn: localUnsiwapReturn,
+          mooniswapReturn: localUnsiwapReturn,
           netChange: localNetChange,
           assetChange: localAssetChange,
-          uniswapChange: localUniswapChange
+          mooniswapChange: localMooniswapChange
         })
       }
 
@@ -605,7 +605,7 @@ export async function getReturns(user, pair, ethPrice) {
     }
 
     // hard code prices before launch to get better results for stablecoins and WETH
-    if (positionT0.timestamp < 1589747086) {
+    if (positionT0.timestamp < 1597093302) {
       if (priceOverrides.includes(positionT0.pair.token0.id)) {
         positionT0.token0PriceUSD = 1
       }
@@ -614,14 +614,14 @@ export async function getReturns(user, pair, ethPrice) {
       }
 
       // WETH price
-      if (positionT0.pair.token0.id === '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2') {
-        positionT0.token0PriceUSD = 203
+      if (positionT0.pair.token0.id === ETH) {
+        positionT0.token0PriceUSD = 395.84
       }
-      if (positionT0.pair.token1.id === '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2') {
-        positionT0.token1PriceUSD = 203
+      if (positionT0.pair.token1.id === ETH) {
+        positionT0.token1PriceUSD = 395.84
       }
     }
-    if (positionT1.timestamp < 1589747086) {
+    if (positionT1.timestamp < 1597093302) {
       if (priceOverrides.includes(positionT1.pair.token0.id)) {
         positionT1.token0PriceUSD = 1
       }
@@ -629,11 +629,11 @@ export async function getReturns(user, pair, ethPrice) {
         positionT1.token1PriceUSD = 1
       }
       // WETH price
-      if (positionT1.pair.token0.id === '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2') {
-        positionT1.token0PriceUSD = 203
+      if (positionT1.pair.token0.id === ETH) {
+        positionT1.token0PriceUSD = 395.84
       }
-      if (positionT1.pair.token1.id === '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2') {
-        positionT1.token1PriceUSD = 203
+      if (positionT1.pair.token1.id === ETH) {
+        positionT1.token1PriceUSD = 395.84
       }
     }
 
@@ -671,7 +671,7 @@ export async function getReturns(user, pair, ethPrice) {
       token1_amount_t0 * parseFloat(positionT1.token1PriceUSD)
 
     // const imp_loss_usd = no_fees_usd - assetValueT1
-    // const uniswap_return = difference_fees_usd + imp_loss_usd
+    // const mooniswap_return = difference_fees_usd + imp_loss_usd
 
     // calculate value delta based on  prices_t1 - prices_t0 * token_amounts
     const assetValueChange = assetValueT1 - assetValueT0
@@ -694,9 +694,9 @@ export async function getReturns(user, pair, ethPrice) {
     netPercentChange = netPercentChange ? netPercentChange + wieghtedNetChange : wieghtedNetChange
   }
 
-  // uniswap specific return
-  let uniswapReturn = netReturn - assetReturn
-  let uniswapPercentChange = netPercentChange - assetPercentChange
+  // mooniswap specific return
+  let mooniswapReturn = netReturn - assetReturn
+  let mooniswapPercentChange = netPercentChange - assetPercentChange
 
   return {
     asset: {
@@ -707,9 +707,9 @@ export async function getReturns(user, pair, ethPrice) {
       return: netReturn,
       percent: netPercentChange
     },
-    uniswap: {
-      return: uniswapReturn,
-      percent: uniswapPercentChange
+    mooniswap: {
+      return: mooniswapReturn,
+      percent: mooniswapPercentChange
     }
   }
 }
@@ -739,8 +739,8 @@ export function useUserPositions(account) {
                 assetPercentChange: returnData.asset.percent,
                 netReturn: returnData.net.return,
                 netPercentChange: returnData.net.percent,
-                uniswapReturn: returnData.uniswap.return,
-                uniswapPercentChange: returnData.uniswap.percent
+                mooniswapReturn: returnData.mooniswap.return,
+                mooniswapPercentChange: returnData.mooniswap.percent
               }
             })
           )
