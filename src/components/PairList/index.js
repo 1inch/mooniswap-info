@@ -14,7 +14,6 @@ import DoubleTokenLogo from '../DoubleLogo'
 import { ButtonLight, ButtonDark } from '../ButtonStyled'
 import { withRouter } from 'react-router-dom'
 import { OVERVIEW_PAIR_BLACKLIST } from '../../constants'
-import { IncentivisedPairUrls } from './insetivisedPoolList'
 
 dayjs.extend(utc)
 
@@ -38,19 +37,6 @@ const Arrow = styled.div`
 
 const List = styled(Box)`
   -webkit-overflow-scrolling: touch;
-`
-
-const FarmingLabel = styled.div`
-    border: 1px solid #6b7c99;
-    margin-left: 20px;
-    padding: 1px 5px;
-    font-size: 0.65em !important;
-    border-radius: 5px;
-    width: 40px;
-    margin-top: 5px;
-    text-transform: uppercase;
-    color: #6b7c99;
-}
 `
 
 const DashGrid = styled.div`
@@ -195,8 +181,6 @@ function PairList({ pairs, color, history, disbaleLinks, maxItems = 10 }) {
         pairData.token1.symbol = 'yCRV'
       }
 
-      const pairUrl = `${pairData.token0.id}/${pairData.token1.id}`;
-
       return (
         <DashGrid
           style={{ height: '60px' }}
@@ -216,9 +200,6 @@ function PairList({ pairs, color, history, disbaleLinks, maxItems = 10 }) {
               <CustomLink style={{ marginLeft: '20px', whiteSpace: 'nowrap' }} to={'/pair/' + pairAddress} color={color}>
                 {pairData.token0.symbol + '-' + pairData.token1.symbol}
               </CustomLink>
-              {
-                IncentivisedPairUrls[pairUrl] ? <FarmingLabel>Farming</FarmingLabel> : ''
-              }
             </div>
           </DataText>
           <DataText area="liq">{liquidity}</DataText>
