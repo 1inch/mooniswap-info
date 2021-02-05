@@ -27,6 +27,19 @@ const AppWrapper = styled.div`
   justify-content: flex-start;
 `
 
+const InfoHeader = styled.div`
+  padding: 15px 0;
+  background: #ea2626;
+  width: 100%;
+  text-align: center;
+  color: #fff;
+  
+  a {
+    color: #fff;
+    text-decoration: underline;
+  }
+`
+
 function App() {
   const NavHeaderUpdated = withRouter(props => <NavHeader default {...props} />)
 
@@ -36,6 +49,10 @@ function App() {
   return (
     <ApolloProvider client={client}>
       <AppWrapper>
+        <InfoHeader>
+          Все переехало на <a href="https://1inch.exchange/#/">1inch.exchange</a>!
+        </InfoHeader>
+
         {globalData &&
         Object.keys(globalData).length > 0 &&
         globalChartData &&
