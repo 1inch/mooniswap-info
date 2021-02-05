@@ -251,43 +251,43 @@ function PositionList({ positions, transactions }) {
                     </AutoColumn>
                   </AutoColumn>
                 </StatCard>
-                <StatCard>
-                  <AutoColumn gap="20px">
-                    <AutoColumn gap="10px">
-                      <Text fontSize={16} color={'#888D9B'} fontWeight={500}>
-                        Combined Return
-                      </Text>
-                      <Text fontWeight={500}>
-                        <RowFixed>
-                          {formattedNum(position?.netReturn, true, true)} (
-                          {formattedPercent(position?.netPercentChange)})
-                        </RowFixed>
-                      </Text>
-                    </AutoColumn>
-                    <AutoColumn gap="10px">
-                      <Text fontSize={16} color={'#888D9B'} fontWeight={500}>
-                        Asset Return
-                      </Text>
-                      <Text fontWeight={500}>
-                        <RowFixed>
-                          {formattedNum(position?.assetReturn, true, true)} (
-                          {formattedPercent(position?.assetPercentChange)})
-                        </RowFixed>
-                      </Text>
-                    </AutoColumn>
-                    <AutoColumn gap="10px">
-                      <Text fontSize={16} color={'#888D9B'} fontWeight={500}>
-                        Mooniswap Return
-                      </Text>
-                      <Text fontWeight={500}>
-                        <RowFixed>
-                          {formattedNum(position?.mooniswapReturn, true, true)} (
-                          {formattedPercent(position?.mooniswapPercentChange)})
-                        </RowFixed>
-                      </Text>
-                    </AutoColumn>
-                  </AutoColumn>
-                </StatCard>
+                {/*<StatCard>*/}
+                {/*  <AutoColumn gap="20px">*/}
+                {/*    <AutoColumn gap="10px">*/}
+                {/*      <Text fontSize={16} color={'#888D9B'} fontWeight={500}>*/}
+                {/*        Combined Return*/}
+                {/*      </Text>*/}
+                {/*      <Text fontWeight={500}>*/}
+                {/*        <RowFixed>*/}
+                {/*          {formattedNum(position?.netReturn, true, true)} (*/}
+                {/*          {formattedPercent(position?.netPercentChange)})*/}
+                {/*        </RowFixed>*/}
+                {/*      </Text>*/}
+                {/*    </AutoColumn>*/}
+                {/*    <AutoColumn gap="10px">*/}
+                {/*      <Text fontSize={16} color={'#888D9B'} fontWeight={500}>*/}
+                {/*        Asset Return*/}
+                {/*      </Text>*/}
+                {/*      <Text fontWeight={500}>*/}
+                {/*        <RowFixed>*/}
+                {/*          {formattedNum(position?.assetReturn, true, true)} (*/}
+                {/*          {formattedPercent(position?.assetPercentChange)})*/}
+                {/*        </RowFixed>*/}
+                {/*      </Text>*/}
+                {/*    </AutoColumn>*/}
+                {/*    <AutoColumn gap="10px">*/}
+                {/*      <Text fontSize={16} color={'#888D9B'} fontWeight={500}>*/}
+                {/*        Mooniswap Return*/}
+                {/*      </Text>*/}
+                {/*      <Text fontWeight={500}>*/}
+                {/*        <RowFixed>*/}
+                {/*          {formattedNum(position?.mooniswapReturn, true, true)} (*/}
+                {/*          {formattedPercent(position?.mooniswapPercentChange)})*/}
+                {/*        </RowFixed>*/}
+                {/*      </Text>*/}
+                {/*    </AutoColumn>*/}
+                {/*  </AutoColumn>*/}
+                {/*</StatCard>*/}
                 <StatCard>
                   <AutoColumn gap="10px">
                     <Text fontSize={16} color={'#888D9B'} fontWeight={500}>
@@ -335,62 +335,64 @@ function PositionList({ positions, transactions }) {
         <Flex alignItems="center" justifyContent="flexEnd">
           <ClickableText
             area="ownership"
-            onClick={e => {
-              setSortedColumn(SORT_FIELD.LIQ)
-              setSortDirection(sortedColumn !== SORT_FIELD.LIQ ? true : !sortDirection)
-            }}
+            // onClick={e => {
+            //   setSortedColumn(SORT_FIELD.LIQ)
+            //   setSortDirection(sortedColumn !== SORT_FIELD.LIQ ? true : !sortDirection)
+            // }}
           >
-            Pool Ownership {sortedColumn === SORT_FIELD.LIQ ? (!sortDirection ? '↑' : '↓') : ''}
+            Pool Ownership
+            {/*{sortedColumn === SORT_FIELD.LIQ ? (!sortDirection ? '↑' : '↓') : ''}*/}
           </ClickableText>
         </Flex>
-        <Flex alignItems="center">
-          <ClickableText
-            area="market"
-            onClick={e => {
-              setSortedColumn(SORT_FIELD.VOL)
-              setSortDirection(sortedColumn !== SORT_FIELD.VOL ? true : !sortDirection)
-            }}
-          >
-            Asset Return
-            {sortedColumn === SORT_FIELD.VOL ? (!sortDirection ? '↑' : '↓') : ''}
-          </ClickableText>
-        </Flex>
-        {!below1080 && (
-          <Flex alignItems="center" justifyContent="flexEnd">
-            <ClickableText
-              area="return"
-              onClick={e => {
-                setSortedColumn(SORT_FIELD.VOL_7DAYS)
-                setSortDirection(sortedColumn !== SORT_FIELD.VOL_7DAYS ? true : !sortDirection)
-              }}
-            >
-              Mooniswap Return {sortedColumn === SORT_FIELD.VOL_7DAYS ? (!sortDirection ? '↑' : '↓') : ''}
-            </ClickableText>
-          </Flex>
-        )}
-        {!below1080 && (
-          <Flex alignItems="center" justifyContent="flexEnd">
-            <ClickableText
-              area="combined"
-              onClick={e => {
-                setSortedColumn(SORT_FIELD.VOL_7DAYS)
-                setSortDirection(sortedColumn !== SORT_FIELD.VOL_7DAYS ? true : !sortDirection)
-              }}
-            >
-              Combined Return {sortedColumn === SORT_FIELD.VOL_7DAYS ? (!sortDirection ? '↑' : '↓') : ''}
-            </ClickableText>
-          </Flex>
-        )}
+        {/*<Flex alignItems="center">*/}
+        {/*  <ClickableText*/}
+        {/*    area="market"*/}
+        {/*    onClick={e => {*/}
+        {/*      setSortedColumn(SORT_FIELD.VOL)*/}
+        {/*      setSortDirection(sortedColumn !== SORT_FIELD.VOL ? true : !sortDirection)*/}
+        {/*    }}*/}
+        {/*  >*/}
+        {/*    Asset Return*/}
+        {/*    {sortedColumn === SORT_FIELD.VOL ? (!sortDirection ? '↑' : '↓') : ''}*/}
+        {/*  </ClickableText>*/}
+        {/*</Flex>*/}
+        {/*{!below1080 && (*/}
+        {/*  <Flex alignItems="center" justifyContent="flexEnd">*/}
+        {/*    <ClickableText*/}
+        {/*      area="return"*/}
+        {/*      onClick={e => {*/}
+        {/*        setSortedColumn(SORT_FIELD.VOL_7DAYS)*/}
+        {/*        setSortDirection(sortedColumn !== SORT_FIELD.VOL_7DAYS ? true : !sortDirection)*/}
+        {/*      }}*/}
+        {/*    >*/}
+        {/*      Mooniswap Return {sortedColumn === SORT_FIELD.VOL_7DAYS ? (!sortDirection ? '↑' : '↓') : ''}*/}
+        {/*    </ClickableText>*/}
+        {/*  </Flex>*/}
+        {/*)}*/}
+        {/*{!below1080 && (*/}
+        {/*  <Flex alignItems="center" justifyContent="flexEnd">*/}
+        {/*    <ClickableText*/}
+        {/*      area="combined"*/}
+        {/*      onClick={e => {*/}
+        {/*        setSortedColumn(SORT_FIELD.VOL_7DAYS)*/}
+        {/*        setSortDirection(sortedColumn !== SORT_FIELD.VOL_7DAYS ? true : !sortDirection)*/}
+        {/*      }}*/}
+        {/*    >*/}
+        {/*      Combined Return {sortedColumn === SORT_FIELD.VOL_7DAYS ? (!sortDirection ? '↑' : '↓') : ''}*/}
+        {/*    </ClickableText>*/}
+        {/*  </Flex>*/}
+        {/*)}*/}
         {!below1080 && (
           <Flex alignItems="center" justifyContent="flexEnd">
             <ClickableText
               area="value"
-              onClick={e => {
-                setSortedColumn(SORT_FIELD.FEES)
-                setSortDirection(sortedColumn !== SORT_FIELD.FEES ? true : !sortDirection)
-              }}
+              // onClick={e => {
+              //   setSortedColumn(SORT_FIELD.FEES)
+              //   setSortDirection(sortedColumn !== SORT_FIELD.FEES ? true : !sortDirection)
+              // }}
             >
-              Value{sortedColumn === SORT_FIELD.FEES ? (!sortDirection ? '↑' : '↓') : ''}
+              Value
+              {/*{sortedColumn === SORT_FIELD.FEES ? (!sortDirection ? '↑' : '↓') : ''}*/}
             </ClickableText>
           </Flex>
         )}

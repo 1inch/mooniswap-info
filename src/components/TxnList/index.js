@@ -154,10 +154,11 @@ function getTransactionType(event, symbol0, symbol1) {
 }
 
 // @TODO rework into virtualized list
-function TxnList({ transactions, symbol0Override, symbol1Override, color }) {
+function TxnList({ transactions, symbol0Override, symbol1Override, color, hideAccounts }) {
   // page state
   const [page, setPage] = useState(1)
   const [maxPage, setMaxPage] = useState(1)
+  const showAccountsColumn = hideAccounts? false: true;
 
   // sorting
   const [sortDirection, setSortDirection] = useState(true)
@@ -215,6 +216,7 @@ function TxnList({ transactions, symbol0Override, symbol1Override, color }) {
           newTxn.type = TXN_TYPE.REMOVE
           newTxn.token0Amount = burn.amount0
           newTxn.token1Amount = burn.amount1
+          // TODO this fix
           newTxn.account = burn.sender
           newTxn.token0Symbol = burn.pair.token0.symbol
           newTxn.token1Symbol = burn.pair.token1.symbol
@@ -312,11 +314,17 @@ function TxnList({ transactions, symbol0Override, symbol1Override, color }) {
           </>
         )}
         {!below1080 && (
+          showAccountsColumn ? (
           <DataText area="account">
-            <Link color={color} external href={'https://etherscan.io/address/' + item.account}>
+            <Link color={color} external href={'../account/' + item.account}>
               {item.account && item.account.slice(0, 6) + '...' + item.account.slice(38, 42)}
             </Link>
           </DataText>
+          ) : (
+            <DataText area="account">
+              -
+            </DataText>
+          )
         )}
         <DataText area="time">{formatTime(item.timestamp)}</DataText>
       </DashGrid>

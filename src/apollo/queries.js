@@ -1,6 +1,23 @@
 import gql from 'graphql-tag'
 import { FACTORY_ADDRESS, BUNDLE_ID } from '../constants'
 
+export const SUBGRAPH_HEALTH = gql`
+  query health {
+    indexingStatusForCurrentVersion(subgraphName: "ianlapham/uniswapv2") {
+      synced
+      health
+      chains {
+        chainHeadBlock {
+          number
+        }
+        latestBlock {
+          number
+        }
+      }
+    }
+  }
+`
+
 export const V1_DATA_QUERY = gql`
     query mooniswap($date: Int!, $date2: Int!) {
         current: mooniswap(id: "1") {
@@ -57,30 +74,33 @@ export const GET_BLOCKS = timestamps => {
 }
 
 export const SHARE_VALUE = (pairAddress, blocks) => {
+  if (!blocks || blocks.length == 0) {
+    throw `blocks argument is ${blocks}`;
+  }
   let queryString = 'query blocks {'
   queryString += blocks.map(
-    block => `t${block.timestamp}:pair(id:"${pairAddress}", block: { number: ${block.number} }) { 
-    reserve0
-    reserve1
-    reserveUSD
-    totalSupply 
-    token0{
-      derivedETH
-    }
-    token1{
-      derivedETH
-    }
-  }
-  `
+    block => `
+      t${block.timestamp}:pair(id:"${pairAddress}", block: { number: ${block.number} }) { 
+        reserve0
+        reserve1
+        reserveUSD
+        totalSupply 
+        token0{
+          derivedETH
+        }
+        token1{
+          derivedETH
+        }
+      }
+    `
   )
-
   queryString += ','
-
   queryString += blocks.map(
-    block => `b${block.timestamp}: bundle(id:"1", block: { number: ${block.number} }) { 
-    ethPrice
-  }
-  `
+    block => `
+      b${block.timestamp}: bundle(id:"1", block: { number: ${block.number} }) { 
+        ethPrice
+      }
+    `
   )
 
   queryString += '}'
@@ -192,7 +212,7 @@ export const USER_POSITIONS = gql`
 
 export const USER_TRANSACTIONS = gql`
   query transactions($user: Bytes!) {
-    mints(orderBy: timestamp, orderDirection: desc) {
+    mints(orderBy: timestamp, orderDirection: desc, where: { sender: $user }) {
       id
       transaction {
         id
@@ -235,7 +255,7 @@ export const USER_TRANSACTIONS = gql`
       amount1
       amountUSD
     }
-    swaps(orderBy: timestamp, orderDirection: desc) {
+    swaps(orderBy: timestamp, orderDirection: desc, where: { sender: $user }) {
       id
       transaction {
         id
@@ -758,6 +778,79 @@ export const FILTERED_TRANSACTIONS = gql`
       amountUSD
       src
       dest
+    }
+  }
+`
+
+export const TOP_LPS_PER_PAIRS = gql`
+  query lps($pair: Bytes!) {
+    liquidityPositions(where: { pair: $pair }, orderBy: liquidityTokenBalance, orderDirection: desc, first: 10) {
+      user {
+        id
+      }
+      pair {
+        id
+      }
+      liquidityTokenBalance
+    }
+  }
+`
+
+export const USER_MINTS_BUNRS_PER_PAIR = gql`
+  query events($user: Bytes!, $pair: Bytes!) {
+    mints(where: { to: $user, pair: $pair }) {
+      amountUSD
+      amount0
+      amount1
+      timestamp
+      pair {
+        token0 {
+          id
+        }
+        token1 {
+          id
+        }
+      }
+    }
+    burns(where: { sender: $user, pair: $pair }) {
+      amountUSD
+      amount0
+      amount1
+      timestamp
+      pair {
+        token0 {
+          id
+        }
+        token1 {
+          id
+        }
+      }
+    }
+  }
+`
+
+export const POSITIONS_BY_BLOCK = (account, blocks) => {
+  let queryString = 'query blocks {'
+  queryString += blocks.map(
+    block => `
+      t${block.timestamp}:liquidityPositions(where: {user: "${account}"}, block: { number: ${block.number} }) { 
+        liquidityTokenBalance
+        pair {
+          id
+          totalSupply
+          reserveUSD
+        }
+      }
+    `
+  )
+  queryString += '}'
+  return gql(queryString)
+}
+
+export const FIRST_SNAPSHOT = gql`
+  query snapshots($user: Bytes!) {
+    liquidityPositionSnapshots(first: 1, where: { user: $user }, orderBy: timestamp, orderDirection: asc) {
+      timestamp
     }
   }
 `

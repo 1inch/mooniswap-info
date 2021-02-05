@@ -5,8 +5,9 @@ import utc from 'dayjs/plugin/utc'
 import { useTimeframe } from './Application'
 import { timeframeOptions } from '../constants'
 import { getPercentChange, getBlockFromTimestamp, getBlocksFromTimestamps, get2DayPercentChange } from '../helpers'
-import { GLOBAL_DATA, GLOBAL_TXNS, GLOBAL_CHART, ETH_PRICE, ALL_PAIRS, ALL_TOKENS } from '../apollo/queries'
+import { GLOBAL_DATA, GLOBAL_TXNS, GLOBAL_CHART, ETH_PRICE, ALL_PAIRS, ALL_TOKENS,TOP_LPS_PER_PAIRS } from '../apollo/queries'
 import weekOfYear from 'dayjs/plugin/weekOfYear'
+import { useAllPairData } from './PairData'
 
 const UPDATE = 'UPDATE'
 const UPDATE_TXNS = 'UPDATE_TXNS'
@@ -15,6 +16,7 @@ const UPDATE_ETH_PRICE = 'UPDATE_ETH_PRICE'
 const ETH_PRICE_KEY = 'ETH_PRICE_KEY'
 const UPDATE_ALL_PAIRS_IN_MOONISWAP = 'UPDAUPDATE_ALL_PAIRS_IN_MOONISWAPTE_TOP_PAIRS'
 const UPDATE_ALL_TOKENS_IN_MOONISWAP = 'UPDATE_ALL_TOKENS_IN_MOONISWAP'
+const UPDATE_TOP_LPS = 'UPDATE_TOP_LPS'
 
 dayjs.extend(utc)
 dayjs.extend(weekOfYear)
@@ -75,6 +77,15 @@ function reducer(state, { type, payload }) {
         allTokens
       }
     }
+
+    case UPDATE_TOP_LPS: {
+      const { topLps } = payload
+      return {
+        ...state,
+        topLps
+      }
+    }
+
     default: {
       throw Error(`Unexpected action type in DataContext reducer: '${type}'.`)
     }
@@ -84,12 +95,14 @@ function reducer(state, { type, payload }) {
 export default function Provider({ children }) {
   const [state, dispatch] = useReducer(reducer, {})
   const update = useCallback(data => {
+
     dispatch({
       type: UPDATE,
       payload: {
         data
       }
     })
+
   }, [])
 
   const updateTransactions = useCallback(transactions => {
@@ -139,17 +152,28 @@ export default function Provider({ children }) {
       }
     })
   }, [])
+
+  const updateTopLps = useCallback(topLps => {
+    dispatch({
+      type: UPDATE_TOP_LPS,
+      payload: {
+        topLps
+      }
+    })
+  }, [])
+
   return (
     <GlobalDataContext.Provider
       value={useMemo(
         () => [
           state,
-          { update, updateTransactions, updateChart, updateEthPrice, updateAllPairsInMooniswap, updateAllTokensInMooniswap }
+          { update, updateTransactions, updateTopLps, updateChart, updateEthPrice, updateAllPairsInMooniswap, updateAllTokensInMooniswap }
         ],
         [
           state,
           update,
           updateTransactions,
+          updateTopLps,
           updateChart,
           updateEthPrice,
           updateAllPairsInMooniswap,
@@ -438,6 +462,7 @@ export function useGlobalData() {
   useEffect(() => {
     async function fetchData() {
       let globalData = await getGlobalData(ethPrice, oldEthPrice)
+
       globalData && update(globalData)
 
       let allPairs = await getAllPairsOnMooniswap()
@@ -543,4 +568,139 @@ export function useAllTokensInMooniswap() {
   let allTokens = state?.allTokens
 
   return allTokens || []
+}
+
+/**
+ * Get the top liquidity positions based on USD size
+ * @TODO Not a perfect lookup needs improvement
+ */
+// export function useTopLps() {
+//   const [state, { updateTopLps }] = useGlobalDataContext()
+//   let topLps = state?.topLps
+//
+//   const allPairs = useAllPairData()
+//
+//   useEffect(() => {
+//     async function fetchData() {
+//       // get top 20 by reserves
+//       let topPairs = Object.keys(allPairs)
+//         ?.sort((a, b) => parseFloat(allPairs[a].reserveUSD > allPairs[b].reserveUSD ? -1 : 1))
+//         ?.slice(0, 99)
+//         .map(pair => pair)
+//
+//       let topLpLists = await Promise.all(
+//         topPairs.map(async pair => {
+//           // for each one, fetch top LPs
+//           const { data: results } = await client.query({
+//             query: TOP_LPS_PER_PAIRS,
+//             variables: {
+//               pair: pair.toString()
+//             },
+//             fetchPolicy: 'cache-first'
+//           })
+//           return results.liquidityPositions
+//         })
+//       )
+//
+//       // get the top lps from the results formatted
+//       const topLps = []
+//       topLpLists.map(list => {
+//         return list.map(entry => {
+//           const pairData = allPairs[entry.pair.id]
+//           return topLps.push({
+//             user: entry.user,
+//             pairName: pairData.token0.symbol + '-' + pairData.token1.symbol,
+//             pairAddress: entry.pair.id,
+//             token0: pairData.token0.id,
+//             token1: pairData.token1.id,
+//             usd:
+//               (parseFloat(entry.liquidityTokenBalance) / parseFloat(pairData.totalSupply)) *
+//               parseFloat(pairData.reserveUSD)
+//           })
+//         })
+//       })
+//
+//       const sorted = topLps.sort((a, b) => (a.usd > b.usd ? -1 : 1))
+//       const shorter = sorted.splice(0, 100)
+//       updateTopLps(shorter)
+//     }
+//
+//     if (!topLps && allPairs && Object.keys(allPairs).length > 0) {
+//       fetchData()
+//     }
+//   })
+//
+//   return topLps
+// }
+
+/**
+ * Get the top liquidity positions based on USD size
+ * @TODO Not a perfect lookup needs improvement
+ */
+export function useTopLps() {
+  const [state, { updateTopLps }] = useGlobalDataContext()
+  let topLps = state?.topLps
+
+  const allPairs = useAllPairData()
+
+  useEffect(() => {
+    async function fetchData() {
+      // get top 20 by reserves
+      let topPairs = Object.keys(allPairs)
+        ?.sort((a, b) => parseFloat(allPairs[a].reserveUSD > allPairs[b].reserveUSD ? -1 : 1))
+        ?.slice(0, 99)
+        .map(pair => pair)
+
+      let topLpLists = await Promise.all(
+        topPairs.map(async pair => {
+
+          try {
+            const { data: results } = await client.query({
+              query: TOP_LPS_PER_PAIRS,
+              variables: {
+                pair: pair.toString()
+              },
+              fetchPolicy: 'cache-first'
+            })
+            return results.liquidityPositions
+          } catch (e) {
+            return undefined
+          }
+          // for each one, fetch top LPs
+        }).filter(x => x)
+      )
+
+      // get the top lps from the results formatted
+      const topLps = []
+      topLpLists.map(list => {
+        if (!list) {
+          return undefined;
+        }
+        return list.map(entry => {
+          const pairData = allPairs[entry.pair.id]
+          return topLps.push({
+            user: entry.user,
+            pairName: pairData.token0.symbol + '-' + pairData.token1.symbol,
+            pairAddress: entry.pair.id,
+            token0: pairData.token0.id,
+            token1: pairData.token1.id,
+            usd:
+              (parseFloat(entry.liquidityTokenBalance) / parseFloat(pairData.totalSupply)) *
+              parseFloat(pairData.reserveUSD)
+          })
+        })
+      }).filter(x => x)
+
+      const sorted = topLps.sort((a, b) => (a.usd > b.usd ? -1 : 1))
+      return sorted.splice(0, 100)
+    }
+
+    if (!topLps && allPairs && Object.keys(allPairs).length > 0) {
+      fetchData().then((shorter) => {
+        updateTopLps(shorter)
+      })
+    }
+  })
+
+  return topLps
 }

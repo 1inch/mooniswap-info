@@ -73,10 +73,10 @@ const DashGrid = styled.div`
     grid-template-areas: ' name liq vol volWeek fees pool ';
   }
 
-  @media screen and (min-width: 1200px) {
-    grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr ${({ disbaleLinks }) => (disbaleLinks ? '160px' : '300px')};
-    grid-template-areas: ' name liq vol volWeek fees pool';
-  }
+  // @media screen and (min-width: 1200px) {
+  //   grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr ${({ disbaleLinks }) => (disbaleLinks ? '160px' : '300px')};
+  //   grid-template-areas: ' name liq vol volWeek fees pool';
+  // }
 `
 
 const ListWrapper = styled.div``

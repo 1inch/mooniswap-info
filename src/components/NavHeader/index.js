@@ -6,6 +6,7 @@ import Search from '../Search'
 import { RowFixed, RowBetween } from '../Row'
 import { AutoColumn } from '../Column'
 import { useMedia } from 'react-use'
+import Link from '../Link'
 
 const Header = styled.div`
   display: flex;
@@ -92,6 +93,7 @@ export default function NavHeader({ token, pair, account }) {
           {/*    </Link>*/}
           {/*  </CombinedWrapper>*/}
           {/*)}*/}
+          <Link href="./accounts">Accounts</Link>
         </RowFixed>
       </RowBetween>
     </Header>
